@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sacred</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Share+Tech+Mono&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#c9a96e;
+  --gold-dim:#7a6140;
+  --obsidian:#0a0a0f;
+  --void:#06060a;
+  --surface:#111118;
+  --surface2:#18181f;
+  --border:#ffffff0f;
+  --border-gold:#c9a96e22;
+  --text:#e8e4dc;
+  --text-dim:#7a7570;
+  --text-muted:#3a3830;
+  --eth:#627eea;
+  --eth-dim:#627eea33;
+  --radius:6px;
+}
+html,body{height:100%;background:var(--void);color:var(--text);font-family:'Cormorant Garamond',serif;overflow:hidden}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;height:56px;
+  background:var(--void);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  font-size:1.1rem;letter-spacing:.35em;color:var(--gold);
+  font-weight:300;text-transform:uppercase;
+}
+.nav-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius)}
+.nav-tab{
+  padding:.35rem 1.2rem;font-family:'DM Mono',monospace;font-size:.7rem;
+  letter-spacing:.1em;background:none;border:none;color:var(--text-dim);
+  cursor:pointer;transition:all .2s;text-transform:lowercase;
+}
+.nav-tab.active{background:var(--surface);color:var(--gold)}
+.nav-tab:first-child{border-radius:var(--radius) 0 0 var(--radius)}
+.nav-tab:last-child{border-radius:0 var(--radius) var(--radius) 0}
+.wallet-btn{
+  display:flex;align-items:center;gap:.5rem;padding:.4rem 1rem;
+  background:var(--eth-dim);border:1px solid var(--eth)44;border-radius:var(--radius);
+  font-family:'DM Mono',monospace;font-size:.7rem;color:var(--eth);cursor:pointer;
+  transition:all .2s;letter-spacing:.05em;
+}
+.wallet-btn:hover{background:var(--eth)22;border-color:var(--eth)88}
+.wallet-btn.connected{background:#1a2a1a;border-color:#4a8a4a44;color:#6ab86a}
+.wallet-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* PAGES */
+.page{display:none;position:fixed;top:56px;left:0;right:0;bottom:0;overflow:hidden}
+.page.active{display:flex}
+
+/* ═══════════════════════════════════════
+   ORÁCULO
+═══════════════════════════════════════ */
+#oracle{flex-direction:column}
+
+.oracle-header{
+  padding:2rem 2rem .5rem;text-align:center;flex-shrink:0;
+}
+.oracle-symbol{
+  font-size:2rem;color:var(--gold);opacity:.5;margin-bottom:.5rem;
+  animation:breathe 4s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.7;transform:scale(1.05)}}
+.oracle-title{font-size:.65rem;letter-spacing:.4em;color:var(--text-dim);font-family:'DM Mono',monospace;text-transform:uppercase}
+
+.messages{
+  flex:1;overflow-y:auto;padding:1rem 1.5rem;display:flex;flex-direction:column;gap:1rem;
+  scroll-behavior:smooth;
+}
+.messages::-webkit-scrollbar{width:2px}
+.messages::-webkit-scrollbar-track{background:transparent}
+.messages::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:1px}
+
+.msg{max-width:680px;animation:msgIn .4s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;text-align:right}
+.msg.oracle-msg{align-self:flex-start}
+
+.msg-bubble{
+  display:inline-block;padding:.7rem 1rem;border-radius:var(--radius);
+  font-size:1rem;line-height:1.65;
+}
+.msg.user .msg-bubble{
+  background:var(--surface);border:1px solid var(--border-gold);
+  color:var(--text);font-style:italic;
+}
+.msg.oracle-msg .msg-bubble{
+  background:transparent;border:none;
+  color:var(--text);font-weight:300;font-size:1.05rem;
+}
+.msg-label{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;
+  color:var(--text-muted);margin-bottom:.25rem;text-transform:uppercase}
+
+.oracle-typing{display:flex;align-items:center;gap:.4rem;padding:.5rem 0}
+.oracle-typing span{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.3;animation:dot 1.2s ease-in-out infinite}
+.oracle-typing span:nth-child(2){animation-delay:.2s}
+.oracle-typing span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:.9;transform:scale(1.2)}}
+
+.oracle-input-wrap{
+  padding:1rem 1.5rem 1.5rem;flex-shrink:0;
+  border-top:1px solid var(--border);background:var(--void);
+}
+.oracle-suggestions{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem}
+.suggestion{
+  padding:.3rem .8rem;border:1px solid var(--border);border-radius:20px;
+  font-size:.8rem;color:var(--text-dim);cursor:pointer;transition:all .15s;
+  font-family:'Cormorant Garamond',serif;font-style:italic;background:none;
+}
+.suggestion:hover{border-color:var(--gold-dim);color:var(--gold)}
+.oracle-form{display:flex;gap:.75rem;align-items:flex-end}
+.oracle-textarea{
+  flex:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.75rem 1rem;color:var(--text);
+  font-family:'Cormorant Garamond',serif;font-size:1rem;resize:none;
+  min-height:48px;max-height:120px;line-height:1.5;transition:border .2s;
+  outline:none;
+}
+.oracle-textarea:focus{border-color:var(--gold-dim)}
+.oracle-textarea::placeholder{color:var(--text-muted);font-style:italic}
+.send-btn{
+  padding:.7rem 1.2rem;background:var(--gold);color:var(--obsidian);
+  border:none;border-radius:var(--radius);cursor:pointer;
+  font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;
+  transition:all .15s;flex-shrink:0;
+}
+.send-btn:hover{background:#dfc07e}
+.send-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ═══════════════════════════════════════
+   MERCADO
+═══════════════════════════════════════ */
+#market{flex-direction:column}
+#mkt-grid-view{overflow-y:auto;flex:1;display:flex;flex-direction:column}
+.market-inner{padding:2rem;max-width:900px;margin:0 auto;width:100%}
+.market-header{margin-bottom:2rem}
+.market-title{font-size:1.8rem;font-weight:300;color:var(--text);letter-spacing:.05em}
+.market-subtitle{font-size:.85rem;color:var(--text-dim);margin-top:.25rem;font-style:italic}
+
+.market-filters{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.filter-btn{
+  padding:.3rem .9rem;border:1px solid var(--border);border-radius:20px;
+  background:none;color:var(--text-dim);font-size:.75rem;cursor:pointer;
+  font-family:'DM Mono',monospace;letter-spacing:.05em;transition:all .15s;
+}
+.filter-btn.active,.filter-btn:hover{border-color:var(--gold-dim);color:var(--gold);background:var(--border-gold)}
+
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1px;background:var(--border)}
+.product-card{
+  background:var(--void);padding:1.5rem;cursor:pointer;
+  transition:background .2s;position:relative;overflow:hidden;
+}
+.product-card:hover{background:var(--surface)}
+.product-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.product-card:hover::before{opacity:1}
+.product-tag{
+  font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.2em;
+  color:var(--text-muted);text-transform:uppercase;margin-bottom:.75rem;
+}
+.product-name{font-size:1.15rem;font-weight:300;margin-bottom:.4rem;color:var(--text)}
+.product-desc{font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:1rem;font-style:italic}
+.product-footer{display:flex;justify-content:space-between;align-items:flex-end}
+.product-price{font-size:1rem;color:var(--gold)}
+.product-price-eth{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--eth);margin-top:.15rem}
+.product-acquire{
+  padding:.35rem .85rem;border:1px solid var(--gold-dim);border-radius:var(--radius);
+  background:none;color:var(--gold);font-size:.7rem;font-family:'DM Mono',monospace;
+  cursor:pointer;transition:all .15s;letter-spacing:.05em;
+}
+.product-acquire:hover{background:var(--gold);color:var(--obsidian)}
+.product-badge{
+  display:inline-block;padding:.15rem .5rem;border-radius:2px;
+  font-size:.6rem;font-family:'DM Mono',monospace;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:.75rem;
+}
+.badge-nft{background:#627eea18;color:var(--eth);border:1px solid #627eea33}
+.badge-digital{background:#c9a96e18;color:var(--gold);border:1px solid var(--border-gold)}
+.badge-physical{background:#4a8a4a18;color:#6ab86a;border:1px solid #4a8a4a33}
+
+/* MODAL */
+.modal-overlay{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:#00000099;backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border-gold);
+  border-radius:var(--radius);padding:2rem;max-width:400px;width:90%;
+  animation:modalIn .3s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal h3{font-size:1.3rem;font-weight:300;margin-bottom:.5rem}
+.modal p{font-size:.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:1.5rem;font-style:italic}
+.modal-actions{display:flex;gap:.75rem}
+.modal-confirm{
+  flex:1;padding:.65rem;background:var(--gold);color:var(--obsidian);
+  border:none;border-radius:var(--radius);font-family:'DM Mono',monospace;
+  font-size:.75rem;cursor:pointer;letter-spacing:.1em;transition:all .15s;
+}
+.modal-confirm:hover{background:#dfc07e}
+.modal-cancel{
+  padding:.65rem 1rem;background:none;border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--text-dim);font-family:'DM Mono',monospace;
+  font-size:.75rem;cursor:pointer;transition:all .15s;
+}
+.modal-cancel:hover{border-color:var(--text-dim)}
+
+/* WALLET PANEL */
+.wallet-panel{
+  display:none;position:fixed;top:56px;right:0;bottom:0;width:300px;z-index:150;
+  background:var(--surface);border-left:1px solid var(--border);padding:1.5rem;
+  overflow-y:auto;animation:slideIn .25s ease;
+}
+.wallet-panel.open{display:block}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.wallet-section{margin-bottom:1.5rem}
+.wallet-label{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:.5rem}
+.wallet-address{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--eth);word-break:break-all;line-height:1.5}
+.wallet-balance{font-size:1.5rem;color:var(--text);font-weight:300}
+.wallet-balance-sub{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text-muted);margin-top:.25rem}
+.wallet-asset{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:.6rem 0;border-bottom:1px solid var(--border);
+}
+.wallet-asset:last-child{border:none}
+.asset-name{font-size:.85rem;color:var(--text)}
+.asset-val{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--text-dim)}
+.wallet-close{
+  position:absolute;top:1rem;right:1rem;background:none;border:none;
+  color:var(--text-muted);cursor:pointer;font-size:1.2rem;
+}
+.tx-item{padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.8rem}
+.tx-item:last-child{border:none}
+.tx-type{color:var(--text);margin-bottom:.15rem}
+.tx-hash{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--text-muted)}
+
+/* ═══════════════════════════════════════
+   CÓDICE
+═══════════════════════════════════════ */
+#codex{flex-direction:row;overflow:hidden}
+
+.codex-sidebar{
+  width:200px;flex-shrink:0;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.codex-sidebar::-webkit-scrollbar{width:2px}
+.codex-sidebar::-webkit-scrollbar-thumb{background:#00ff8830}
+
+.codex-logo{padding:1.25rem;border-bottom:1px solid var(--border)}
+.codex-logo-title{font-family:'Share Tech Mono',monospace;font-size:.7rem;letter-spacing:.15em;color:#00ff88;text-transform:uppercase}
+.codex-logo-sub{font-size:.55rem;color:var(--text-muted);margin-top:.2rem;font-family:'DM Mono',monospace;letter-spacing:.1em}
+.codex-badge-free{
+  display:inline-block;margin-top:.5rem;padding:.15rem .5rem;
+  background:#00ff8815;border:1px solid #00ff8830;border-radius:3px;
+  font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.15em;color:#00ff88;text-transform:uppercase;
+}
+
+.codex-nav-section{padding:.75rem 1rem .2rem;font-size:.5rem;letter-spacing:.25em;color:var(--text-muted);text-transform:uppercase;font-family:'DM Mono',monospace}
+.codex-nav-item{
+  display:block;padding:.45rem 1rem;font-size:.62rem;letter-spacing:.08em;
+  color:var(--text-dim);cursor:pointer;transition:all .15s;
+  border-left:2px solid transparent;text-transform:uppercase;
+  font-family:'DM Mono',monospace;background:none;border-top:none;border-right:none;border-bottom:none;
+  width:100%;text-align:left;
+}
+.codex-nav-item:hover{color:#00ff88;background:#00ff8808}
+.codex-nav-item.active{color:#00ff88;border-left-color:#00ff88;background:#00ff8810}
+
+.codex-progress-wrap{margin-top:auto;padding:1rem;border-top:1px solid var(--border)}
+.codex-progress-label{font-size:.52rem;letter-spacing:.15em;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:.4rem}
+.codex-progress-bar{height:2px;background:var(--surface2);border-radius:1px}
+.codex-progress-fill{height:100%;background:#00ff88;border-radius:1px;transition:width .4s ease;width:0%}
+.codex-progress-pct{font-size:.58rem;color:var(--text-dim);margin-top:.3rem;font-family:'DM Mono',monospace}
+
+.codex-main{
+  flex:1;overflow-y:auto;background:var(--void);
+  scroll-behavior:smooth;
+}
+.codex-main::-webkit-scrollbar{width:3px}
+.codex-main::-webkit-scrollbar-thumb{background:#00ff8825}
+
+/* Reading progress bar */
+.codex-readbar{
+  position:sticky;top:0;left:0;right:0;height:2px;z-index:10;
+  background:transparent;
+}
+.codex-readbar-fill{height:100%;background:#00ff88;width:0%;box-shadow:0 0 6px #00ff88;transition:width .1s}
+
+/* scanlines */
+.codex-main::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:5;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);
+}
+
+.codex-chapter{
+  max-width:640px;margin:0 auto;padding:3rem 2rem 6rem;
+  opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s;
+}
+.codex-chapter.visible{opacity:1;transform:translateY(0)}
+
+/* Cover */
+.codex-cover{min-height:80vh;display:flex;flex-direction:column;justify-content:center}
+.codex-eyebrow{font-size:.6rem;letter-spacing:.4em;color:#00ff88;text-transform:uppercase;margin-bottom:1.75rem;font-family:'DM Mono',monospace;text-shadow:0 0 10px #00ff8855}
+.codex-title-main{font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:300;line-height:1.1;color:#e8e8e8;margin-bottom:.4rem}
+.codex-title-em{color:#00ff88;font-style:italic}
+.codex-title-sub{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:300;font-style:italic;color:var(--gold);margin-bottom:2.5rem}
+.codex-cover-meta{font-size:.6rem;letter-spacing:.2em;color:var(--text-muted);border-top:1px solid var(--border);padding-top:1.25rem;font-family:'DM Mono',monospace;display:flex;gap:2rem;flex-wrap:wrap}
+
+/* Chapter headers */
+.codex-ch-num{font-size:.58rem;letter-spacing:.4em;color:#00ff88;text-transform:uppercase;margin-bottom:.6rem;font-family:'DM Mono',monospace}
+.codex-ch-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:#e8e8e8;margin-bottom:.2rem}
+.codex-ch-en{font-family:'Space Mono',monospace;font-size:.75rem;color:var(--text-dim);margin-bottom:2rem;font-style:italic}
+
+/* Terminal */
+.codex-terminal{background:var(--surface);border:1px solid #00ff8818;border-radius:4px;margin:1.75rem 0;overflow:hidden}
+.codex-term-header{display:flex;align-items:center;gap:.4rem;padding:.55rem .9rem;background:var(--surface2);border-bottom:1px solid #00ff8812}
+.tdot{width:7px;height:7px;border-radius:50%}
+.tdot.r{background:#ff5f57}.tdot.y{background:#febc2e}.tdot.g{background:#28c840}
+.codex-term-title{font-size:.58rem;color:var(--text-dim);margin-left:.4rem;letter-spacing:.1em;font-family:'DM Mono',monospace}
+.codex-term-body{padding:1rem 1.25rem;font-family:'Share Tech Mono',monospace;font-size:.78rem;line-height:1.85}
+.tp{color:#00ff88}.tc{color:var(--text)}.to{color:var(--text-dim);display:block;margin-top:.1rem}
+.te{color:#ff4455}.tw{color:var(--gold)}.tcm{color:var(--text-muted)}.thi{color:#00d4ff;text-shadow:0 0 6px #00d4ff44}
+.tl{margin:.15rem 0}
+
+/* Prose */
+.codex-prose{font-family:'Cormorant Garamond',serif;font-size:1.1rem;line-height:1.85;color:#d0cdc8;margin:1.25rem 0;font-weight:300}
+.codex-prose em{color:var(--gold);font-style:italic}
+.codex-prose strong{color:#00ff88;font-weight:400;font-family:'DM Mono',monospace;font-size:.85rem}
+.codex-en{font-family:'Space Mono',monospace;font-size:.8rem;line-height:1.9;color:var(--text-dim);margin:1.25rem 0;padding-left:1.25rem;border-left:2px solid #00ff8825;font-style:italic}
+
+/* Code block */
+.codex-code{background:var(--surface2);border:1px solid #00ff8812;border-radius:4px;padding:1.1rem 1.25rem;margin:1.5rem 0;font-family:'Share Tech Mono',monospace;font-size:.78rem;line-height:1.8;overflow-x:auto}
+.ck{color:#c792ea}.cs{color:var(--gold)}.ccm{color:var(--text-muted);font-style:italic}.cf{color:#00d4ff}.cnum{color:#00ff88}.ct{color:#ff9d00}
+
+/* Axiom */
+.codex-axiom{border:1px solid var(--gold-dim);border-radius:4px;padding:1.25rem 1.75rem;margin:1.75rem 0;background:linear-gradient(135deg,#c9a96e0a,transparent);position:relative}
+.codex-axiom::before{content:'AXIOM';position:absolute;top:-.45rem;left:.9rem;font-size:.5rem;letter-spacing:.3em;color:var(--gold);background:var(--void);padding:0 .4rem;font-family:'DM Mono',monospace}
+.codex-axiom-text{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;font-style:italic;color:var(--gold);line-height:1.7}
+.codex-axiom-en{font-size:.75rem;color:var(--text-dim);margin-top:.6rem;font-family:'Space Mono',monospace;font-style:italic}
+
+/* Schema */
+.codex-schema{background:var(--surface);border:1px solid #00ff8812;border-radius:4px;padding:1.25rem;margin:1.75rem 0;font-family:'Share Tech Mono',monospace;font-size:.72rem}
+.codex-schema-title{color:#00d4ff;letter-spacing:.2em;font-size:.6rem;text-transform:uppercase;margin-bottom:.9rem}
+.codex-schema-row{display:flex;align-items:center;gap:.6rem;margin:.35rem 0;flex-wrap:wrap}
+.snode{padding:.25rem .6rem;border:1px solid;border-radius:3px;font-size:.68rem;white-space:nowrap}
+.sn-ego{border-color:#ff4455;color:#ff4455}.sn-sys{border-color:#00d4ff;color:#00d4ff}
+.sn-con{border-color:#00ff88;color:#00ff88}.sn-void{border-color:var(--text-muted);color:var(--text-muted)}
+.sarrow{color:var(--text-muted)}.slabel{color:var(--text-dim);font-size:.62rem;font-style:italic}
+
+.codex-divider{text-align:center;margin:2.5rem 0;color:var(--text-muted);font-size:.65rem;letter-spacing:.3em;font-family:'DM Mono',monospace}
+.codex-footnote{font-size:.67rem;color:var(--text-muted);border-top:1px solid var(--border);padding-top:.7rem;margin-top:1.75rem;line-height:1.6;font-family:'Space Mono',monospace}
+
+/* ═══════════════════════════════════════
+   SOLAR PAGE — VERA AETHER · TOMO I
+═══════════════════════════════════════ */
+#solar{flex-direction:column;overflow-y:auto;scroll-behavior:smooth}
+#solar::-webkit-scrollbar{width:3px}
+#solar::-webkit-scrollbar-thumb{background:var(--gold-dim)}
+.solar-wrap{max-width:900px;margin:0 auto;padding:3rem 2.5rem 8rem;width:100%}
+
+/* HERO */
+.solar-hero{display:grid;grid-template-columns:340px 1fr;gap:4rem;align-items:start;margin-bottom:6rem}
+@media(max-width:760px){.solar-hero{grid-template-columns:1fr}}
+
+.solar-mandala-col{display:flex;flex-direction:column;align-items:center;gap:1.5rem;position:sticky;top:2rem}
+.solar-mandala-svg{width:300px;height:300px;filter:drop-shadow(0 0 24px #c9a96e22)}
+.mandala-outer{animation:mandalaOuter 60s linear infinite;transform-origin:150px 150px}
+.mandala-mid{animation:mandalaMid 40s linear infinite reverse;transform-origin:150px 150px}
+.mandala-inner{animation:mandalaInner 25s linear infinite;transform-origin:150px 150px}
+.mandala-core{animation:mandalaCore 8s ease-in-out infinite alternate;transform-origin:150px 150px}
+@keyframes mandalaOuter{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes mandalaMid{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes mandalaInner{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes mandalaCore{from{transform:scale(1);opacity:.7}to{transform:scale(1.06);opacity:1}}
+
+.solar-mandala-label{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;text-align:center}
+.solar-edition-counter{
+  background:var(--surface);border:1px solid var(--border-gold);border-radius:var(--radius);
+  padding:.75rem 1.25rem;text-align:center;width:100%;
+}
+.solar-edition-num{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--gold);font-weight:300}
+.solar-edition-sub{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.2em;color:var(--text-muted);margin-top:.2rem;text-transform:uppercase}
+.solar-edition-bar{height:2px;background:var(--surface2);border-radius:1px;margin-top:.75rem;overflow:hidden}
+.solar-edition-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));width:23%;border-radius:1px;position:relative}
+.solar-edition-fill::after{content:'';position:absolute;right:0;top:-2px;bottom:-2px;width:4px;background:var(--gold);border-radius:2px;box-shadow:0 0 8px var(--gold)}
+
+/* INFO COL */
+.solar-info-col{}
+.solar-badge-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.solar-badge{padding:.2rem .7rem;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;border-radius:2px}
+.sb-tomo{background:#c9a96e12;border:1px solid #c9a96e30;color:var(--gold)}
+.sb-nft{background:#627eea12;border:1px solid #627eea30;color:#627eea}
+.sb-limited{background:#ff445512;border:1px solid #ff445530;color:#ff8890}
+.sb-genesis{background:#ffffff08;border:1px solid #ffffff15;color:var(--text-dim)}
+
+.solar-book-title{font-family:'Cormorant Garamond',serif;font-size:1rem;letter-spacing:.3em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.4rem;font-weight:300}
+.solar-tomo-title{font-family:'Cormorant Garamond',serif;font-size:3.2rem;font-weight:300;line-height:1.05;color:#f0ece4;margin-bottom:.35rem}
+.solar-tomo-em{color:var(--gold);font-style:italic;display:block}
+.solar-tomo-sub{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:var(--text-dim);margin-bottom:.5rem;font-weight:300}
+.solar-author{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.2em;color:var(--text-muted);margin-bottom:2rem;text-transform:uppercase}
+
+.solar-stars{display:flex;align-items:center;gap:.5rem;margin-bottom:2rem}
+.stars-icons{color:var(--gold);font-size:.9rem;letter-spacing:.1em}
+.stars-count{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--text-dim)}
+
+.solar-price-box{background:var(--surface);border:1px solid var(--border-gold);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1.25rem}
+.solar-price-row{display:flex;align-items:baseline;gap:.75rem;margin-bottom:.3rem}
+.solar-price-main{font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:var(--gold);font-weight:300}
+.solar-price-eth{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--eth);padding:.2rem .5rem;background:#627eea12;border:1px solid #627eea22;border-radius:3px}
+.solar-price-note{font-size:.78rem;color:var(--text-muted);font-style:italic;line-height:1.5}
+
+.solar-acquire-btn{
+  width:100%;padding:1rem;background:linear-gradient(135deg,#c9a96e,#a07840);color:#0a0a0f;
+  border:none;border-radius:var(--radius);font-family:'DM Mono',monospace;
+  font-size:.78rem;letter-spacing:.2em;cursor:pointer;transition:all .25s;
+  text-transform:uppercase;margin-bottom:.75rem;font-weight:400;
+  box-shadow:0 4px 20px #c9a96e22;
+}
+.solar-acquire-btn:hover{box-shadow:0 4px 32px #c9a96e44;transform:translateY(-1px)}
+
+.solar-wallet-note{display:flex;align-items:center;gap:.5rem;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--text-muted);justify-content:center;margin-bottom:2rem}
+.solar-eth-dot{width:6px;height:6px;border-radius:50%;background:var(--eth)}
+
+/* TABS */
+.solar-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.solar-tab{
+  padding:.6rem 1.25rem;font-family:'DM Mono',monospace;font-size:.65rem;
+  letter-spacing:.1em;background:none;border:none;color:var(--text-muted);
+  cursor:pointer;transition:all .2s;text-transform:lowercase;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.solar-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.solar-tab:hover{color:var(--text-dim)}
+
+.solar-tab-content{display:none}
+.solar-tab-content.active{display:block}
+
+/* DESCRIPTION */
+.solar-desc-text{font-family:'Cormorant Garamond',serif;font-size:1.12rem;line-height:1.9;color:#d0cdc8;font-weight:300;margin-bottom:1.25rem}
+.solar-desc-text em{color:var(--gold);font-style:italic}
+.solar-index{margin:1.5rem 0}
+.solar-index-title{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.25em;color:var(--text-muted);text-transform:uppercase;margin-bottom:.75rem}
+.solar-index-item{display:flex;justify-content:space-between;align-items:baseline;padding:.45rem 0;border-bottom:1px solid var(--border);font-family:'Cormorant Garamond',serif}
+.solar-index-item:last-child{border:none}
+.solar-index-name{font-size:.95rem;color:var(--text-dim);font-style:italic}
+.solar-index-num{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--text-muted)}
+
+/* RESEÑAS */
+.solar-reviews{display:flex;flex-direction:column;gap:1.25rem}
+.solar-review{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;position:relative}
+.solar-review::before{content:'\201C';position:absolute;top:.5rem;left:1rem;font-family:'Cormorant Garamond',serif;font-size:2.5rem;color:var(--gold-dim);line-height:1}
+.review-text{font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.75;color:var(--text-dim);font-style:italic;padding-left:.5rem;margin-bottom:.9rem}
+.review-footer{display:flex;justify-content:space-between;align-items:center}
+.review-author{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase}
+.review-stars{color:var(--gold);font-size:.75rem}
+.review-tag{font-family:'DM Mono',monospace;font-size:.55rem;padding:.15rem .45rem;background:var(--gold-dim)18;border:1px solid var(--gold-dim)44;border-radius:2px;color:var(--gold-dim);text-transform:uppercase;letter-spacing:.1em}
+
+/* COMMENTS */
+.solar-comment-form{margin-bottom:1.5rem}
+.solar-comment-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.75rem 1rem;color:var(--text);
+  font-family:'Cormorant Garamond',serif;font-size:1rem;resize:none;
+  min-height:80px;line-height:1.5;transition:border .2s;outline:none;margin-bottom:.75rem;
+}
+.solar-comment-input:focus{border-color:var(--gold-dim)}
+.solar-comment-input::placeholder{color:var(--text-muted);font-style:italic}
+.solar-comment-row{display:flex;gap:.75rem;align-items:center}
+.solar-comment-name{
+  flex:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.5rem .75rem;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:.72rem;outline:none;transition:border .2s;
+}
+.solar-comment-name:focus{border-color:var(--gold-dim)}
+.solar-comment-name::placeholder{color:var(--text-muted)}
+.solar-comment-submit{
+  padding:.5rem 1.1rem;background:none;border:1px solid var(--gold-dim);
+  border-radius:var(--radius);color:var(--gold);font-family:'DM Mono',monospace;
+  font-size:.65rem;letter-spacing:.1em;cursor:pointer;transition:all .15s;text-transform:lowercase;
+}
+.solar-comment-submit:hover{background:var(--gold);color:var(--obsidian)}
+.solar-comments-list{display:flex;flex-direction:column;gap:1rem}
+.solar-comment{padding:.9rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.comment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.comment-name{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--gold);letter-spacing:.08em}
+.comment-date{font-family:'DM Mono',monospace;font-size:.55rem;color:var(--text-muted)}
+.comment-body{font-family:'Cormorant Garamond',serif;font-size:.95rem;line-height:1.65;color:var(--text-dim);font-style:italic}
+
+/* SECTION DIVIDER */
+.solar-section-label{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.35em;color:var(--text-muted);text-transform:uppercase;margin-bottom:1.5rem;padding-bottom:.6rem;border-bottom:1px solid var(--border)}
+
+/* Also needed on market */
+.product-card[data-solar]{border:1px solid var(--gold-dim) !important}
+
+/* ═══════════════════════════════════════
+   MARKET TABS
+═══════════════════════════════════════ */
+.mkt-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.mkt-tab{padding:.55rem 1.1rem;font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;background:none;border:none;color:var(--text-muted);cursor:pointer;transition:all .2s;text-transform:lowercase;border-bottom:2px solid transparent;margin-bottom:-1px}
+.mkt-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.mkt-tab:hover{color:var(--text-dim)}
+.mkt-view{display:none}.mkt-view.active{display:block}
+
+/* ═══════════════════════════════════════
+   ECOSYSTEM MAP
+═══════════════════════════════════════ */
+.map-wrap{position:relative;width:100%;height:500px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:grab;user-select:none}
+.map-wrap:active{cursor:grabbing}
+.map-tooltip{position:absolute;background:var(--surface2);border:1px solid var(--border-gold);border-radius:var(--radius);padding:.6rem .9rem;pointer-events:none;font-family:'DM Mono',monospace;font-size:.65rem;color:var(--text);opacity:0;transition:opacity .15s;max-width:220px;z-index:10;line-height:1.6}
+.map-legend{position:absolute;bottom:1rem;left:1rem;display:flex;flex-direction:column;gap:.35rem}
+.map-legend-item{display:flex;align-items:center;gap:.5rem;font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text-muted)}
+.map-legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.map-controls{position:absolute;top:1rem;right:1rem;display:flex;flex-direction:column;gap:.4rem}
+.map-ctrl{width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'DM Mono',monospace}
+.map-ctrl:hover{border-color:var(--gold-dim);color:var(--gold)}
+
+/* ═══════════════════════════════════════
+   TIMELINE
+═══════════════════════════════════════ */
+.timeline-wrap{padding:.5rem 0}
+.timeline-axis{position:relative;padding-left:2.5rem}
+.timeline-line{position:absolute;left:5px;top:8px;bottom:8px;width:1px;background:linear-gradient(to bottom,transparent,var(--gold-dim) 10%,var(--gold) 50%,var(--gold-dim) 90%,transparent)}
+.timeline-node{position:relative;margin-bottom:2.25rem;cursor:pointer}
+.timeline-node:last-child{margin-bottom:0}
+.timeline-dot{position:absolute;left:-2.2rem;top:.4rem;width:11px;height:11px;border-radius:50%;border:2px solid;background:var(--void);transition:transform .2s,box-shadow .2s}
+.timeline-node:hover .timeline-dot{transform:scale(1.5)}
+.timeline-meta{font-family:'DM Mono',monospace;font-size:.57rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.2rem;opacity:.6}
+.timeline-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;color:var(--text);margin-bottom:.2rem}
+.timeline-desc{font-size:.83rem;color:var(--text-dim);line-height:1.6;font-style:italic;max-height:0;overflow:hidden;transition:max-height .35s ease,opacity .3s}
+.timeline-desc.open{max-height:200px;opacity:1}
+.timeline-desc.closed{opacity:0}
+.timeline-badge{display:inline-block;margin-top:.5rem;padding:.15rem .5rem;font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.15em;border-radius:2px;text-transform:uppercase}
+
+/* ═══════════════════════════════════════
+   CHAPTER CONNECTIONS (book detail)
+═══════════════════════════════════════ */
+.connections-wrap{padding:.25rem 0}
+.connections-intro{font-family:'Cormorant Garamond',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;margin-bottom:1.25rem;line-height:1.6}
+.connections-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media(max-width:600px){.connections-grid{grid-template-columns:1fr}}
+.connection-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.85rem 1rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.connection-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--gold-dim),transparent);opacity:0;transition:opacity .2s}
+.connection-card:hover{border-color:var(--gold-dim)}
+.connection-card:hover::before{opacity:1}
+.conn-from{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--text-muted);margin-bottom:.2rem;letter-spacing:.1em}
+.conn-arrow{color:var(--gold);margin:0 .25rem;font-size:.75rem}
+.conn-label{font-size:.92rem;color:var(--text);font-family:'Cormorant Garamond',serif;margin-bottom:.2rem;position:relative}
+.conn-to{font-size:.78rem;color:var(--text-dim);font-style:italic;position:relative}
+
+/* ═══════════════════════════════════════
+   CÓDICE — ARTICLE MODE
+═══════════════════════════════════════ */
+#codex{flex-direction:column;overflow-y:auto}
+.codex-article-list{max-width:720px;margin:0 auto;padding:2rem 2rem 6rem}
+.codex-list-header{margin-bottom:2rem}
+.codex-list-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:#f0ece4;margin-bottom:.25rem}
+.codex-list-sub{font-size:.8rem;color:var(--text-dim);font-family:'DM Mono',monospace;letter-spacing:.1em}
+.codex-filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.codex-filter{padding:.25rem .75rem;border:1px solid var(--border);border-radius:20px;background:none;color:var(--text-muted);font-size:.7rem;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:.05em;transition:all .15s}
+.codex-filter.active,.codex-filter:hover{border-color:var(--green, #00ff88);color:#00ff88}
+
+.article-card{
+  padding:1.5rem 0;border-bottom:1px solid var(--border);cursor:pointer;
+  transition:all .2s;display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:start;
+}
+.article-card:hover .article-title{color:var(--gold)}
+.article-card:last-child{border-bottom:none}
+.article-meta{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:.4rem;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+.article-tag{padding:.1rem .45rem;border-radius:2px;font-size:.55rem}
+.article-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:300;color:var(--text);margin-bottom:.35rem;line-height:1.3;transition:color .2s}
+.article-excerpt{font-size:.85rem;color:var(--text-dim);line-height:1.6;font-style:italic}
+.article-footer{display:flex;gap:.75rem;align-items:center;margin-top:.75rem;flex-wrap:wrap}
+.article-chip{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text-muted);padding:.2rem .5rem;border:1px solid var(--border);border-radius:2px}
+.article-read-time{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text-muted)}
+.article-number{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text-muted);padding:.25rem .5rem;border:1px solid var(--border);border-radius:3px;white-space:nowrap;align-self:start;margin-top:.15rem}
+
+/* ARTICLE READER */
+.article-reader{display:none;max-width:680px;margin:0 auto;padding:2.5rem 2rem 6rem}
+.article-reader.active{display:block}
+.article-back{background:none;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:.35rem .9rem;cursor:pointer;font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;transition:all .15s;margin-bottom:2rem}
+.article-back:hover{color:var(--gold);border-color:var(--gold-dim)}
+.article-reader-meta{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:.75rem;display:flex;gap:1rem;flex-wrap:wrap}
+.article-reader-title{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;color:#f0ece4;line-height:1.15;margin-bottom:.5rem}
+.article-reader-sub{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:var(--text-dim);margin-bottom:2rem;font-weight:300}
+.article-reader-body{font-family:'Cormorant Garamond',serif;font-size:1.1rem;line-height:1.9;color:#ccc8c0;font-weight:300}
+.article-reader-body em{color:var(--gold);font-style:italic}
+.article-reader-body strong{color:var(--text);font-weight:400;font-family:'DM Mono',monospace;font-size:.9rem}
+.article-reader-body p{margin-bottom:1.25rem}
+.article-reader-body h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;color:#f0ece4;margin:2rem 0 .75rem}
+.article-reader-body blockquote{border-left:2px solid var(--gold-dim);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;color:var(--text-dim)}
+.article-reader-body pre{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1rem;font-family:'DM Mono',monospace;font-size:.78rem;color:#00ff88;overflow-x:auto;margin:1.25rem 0;line-height:1.7}
+
+/* AI NOTES */
+.ai-note{background:var(--surface);border:1px solid #627eea22;border-radius:4px;padding:1rem 1.25rem;margin:1.5rem 0}
+.ai-note-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}
+.ai-note-dot{width:6px;height:6px;border-radius:50%;background:#627eea;animation:aipulse 2s ease-in-out infinite}
+@keyframes aipulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+.ai-note-label{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:#627eea;text-transform:uppercase}
+.ai-note-body{font-size:.88rem;color:var(--text-dim);line-height:1.65;font-style:italic;font-family:'Cormorant Garamond',serif}
+.ai-note-generating{color:var(--text-muted);animation:fadeLoop 1.5s ease-in-out infinite}
+@keyframes fadeLoop{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ═══════════════════════════════════════
+   SIGNAL — FINANCIAL INTELLIGENCE
+═══════════════════════════════════════ */
+#signal{flex-direction:column;overflow-y:auto}
+#signal::-webkit-scrollbar{width:3px}
+#signal::-webkit-scrollbar-thumb{background:#00ff8825}
+.signal-wrap{max-width:960px;margin:0 auto;padding:2rem 2rem 6rem;width:100%}
+
+.signal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
+.signal-title-block{}
+.signal-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:#f0ece4}
+.signal-sub{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--text-muted);letter-spacing:.15em;margin-top:.2rem}
+.signal-live{display:flex;align-items:center;gap:.5rem;font-family:'DM Mono',monospace;font-size:.65rem;color:#00ff88;padding:.35rem .8rem;background:#00ff8810;border:1px solid #00ff8825;border-radius:3px}
+.signal-live-dot{width:6px;height:6px;border-radius:50%;background:#00ff88;animation:aipulse 1.5s ease-in-out infinite}
+
+.signal-disclaimer{background:#ff445510;border:1px solid #ff445525;border-radius:4px;padding:.75rem 1rem;margin-bottom:1.5rem;font-family:'DM Mono',monospace;font-size:.62rem;color:#ff8890;line-height:1.6;letter-spacing:.02em}
+
+/* Asset grid */
+.signal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1px;background:var(--border);margin-bottom:2rem}
+.asset-card{background:var(--void);padding:1.25rem;transition:background .2s;cursor:pointer;position:relative;overflow:hidden}
+.asset-card:hover{background:var(--surface)}
+.asset-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem}
+.asset-symbol{font-family:'DM Mono',monospace;font-size:.95rem;color:var(--text);font-weight:400}
+.asset-category{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;padding:.15rem .4rem;border-radius:2px}
+.cat-crypto{background:#627eea15;color:#627eea;border:1px solid #627eea25}
+.cat-metal{background:#c9a96e15;color:var(--gold);border:1px solid var(--gold-dim)}
+.cat-etf{background:#00ff8815;color:#00ff88;border:1px solid #00ff8825}
+.asset-price{font-family:'DM Mono',monospace;font-size:1.5rem;color:var(--text);margin-bottom:.2rem}
+.asset-change{font-family:'DM Mono',monospace;font-size:.8rem;font-weight:400}
+.asset-change.up{color:#00ff88}.asset-change.down{color:#ff4455}.asset-change.flat{color:var(--text-muted)}
+.asset-name{font-size:.78rem;color:var(--text-muted);margin-bottom:.75rem;font-style:italic}
+.asset-sparkline{width:100%;height:40px}
+.asset-signal{display:flex;align-items:center;gap:.5rem;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)}
+.signal-pill{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;padding:.2rem .55rem;border-radius:2px;text-transform:uppercase}
+.sig-bull{background:#00ff8815;color:#00ff88;border:1px solid #00ff8825}
+.sig-bear{background:#ff445515;color:#ff4455;border:1px solid #ff445525}
+.sig-neutral{background:#c9a96e15;color:var(--gold);border:1px solid var(--gold-dim)}
+.sig-loading{background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)}
+.signal-text{font-size:.72rem;color:var(--text-dim);font-style:italic;font-family:'Cormorant Garamond',serif}
+
+/* AI Analysis Panel */
+.signal-analysis{background:var(--surface);border:1px solid var(--border);border-radius:4px;margin-bottom:2rem}
+.signal-analysis-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
+.signal-analysis-title{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:#627eea;text-transform:uppercase;display:flex;align-items:center;gap:.5rem}
+.signal-analysis-body{padding:1.25rem}
+.signal-analysis-text{font-family:'Cormorant Garamond',serif;font-size:1.05rem;line-height:1.85;color:var(--text-dim);font-weight:300;min-height:80px}
+.signal-analysis-text em{color:var(--gold)}
+.signal-analysis-btn{padding:.4rem 1rem;background:none;border:1px solid #627eea44;border-radius:3px;color:#627eea;font-family:'DM Mono',monospace;font-size:.65rem;cursor:pointer;letter-spacing:.1em;transition:all .15s}
+.signal-analysis-btn:hover{background:#627eea15}
+.signal-analysis-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Watchlist */
+.signal-watchlist{background:var(--surface);border:1px solid var(--border);border-radius:4px}
+.signal-watchlist-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase}
+.watchlist-row{display:grid;grid-template-columns:2fr 1.5fr 1fr 1.5fr;gap:.5rem;padding:.75rem 1.25rem;border-bottom:1px solid var(--border);align-items:center;font-family:'DM Mono',monospace;font-size:.72rem}
+.watchlist-row:last-child{border:none}
+.watchlist-row.header{font-size:.58rem;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;background:var(--surface2)}
+.wl-name{color:var(--text)}.wl-price{color:var(--text);text-align:right}
+.wl-change{text-align:right}.wl-signal{text-align:right}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Sacred</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('oracle',this)">oráculo</button>
+    <button class="nav-tab" onclick="showPage('market',this)">mercado</button>
+    <button class="nav-tab" onclick="showPage('codex',this)">códice</button>
+    <button class="nav-tab" onclick="showPage('signal',this)" style="color:#00ff88aa">signal ⬡</button>
+  </div>
+  <button class="wallet-btn" id="walletBtn" onclick="toggleWallet()">
+    <div class="wallet-dot"></div>
+    <span id="walletLabel">conectar wallet</span>
+  </button>
+</nav>
+
+<!-- ORÁCULO -->
+<div class="page active" id="oracle">
+  <div class="oracle-header">
+    <div class="oracle-symbol">☽</div>
+    <div class="oracle-title">el oráculo de sacred</div>
+  </div>
+  <div class="messages" id="messages">
+    <div class="msg oracle-msg">
+      <div class="msg-label">oráculo</div>
+      <div class="msg-bubble">Llega quien llega cuando debe llegar.<br>¿Qué traes contigo hoy — una pregunta, una intención, o simplemente el deseo de ver?</div>
+    </div>
+  </div>
+  <div class="oracle-input-wrap">
+    <div class="oracle-suggestions" id="suggestions">
+      <button class="suggestion" onclick="useSuggestion(this)">¿Qué es Sacred?</button>
+      <button class="suggestion" onclick="useSuggestion(this)">Necesito claridad sobre mi camino</button>
+      <button class="suggestion" onclick="useSuggestion(this)">¿Qué producto es para mí?</button>
+      <button class="suggestion" onclick="useSuggestion(this)">Háblame del mundo solar</button>
+    </div>
+    <div class="oracle-form">
+      <textarea class="oracle-textarea" id="userInput" placeholder="expresa tu intención..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+        oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MERCADO -->
+<div class="page" id="market">
+
+  <!-- GRID VIEW -->
+  <div id="mkt-grid-view" style="flex:1;overflow-y:auto;display:flex;flex-direction:column">
+    <div class="market-inner" style="flex:1">
+      <div class="market-header">
+        <div class="market-title">Mercado</div>
+        <div class="market-subtitle">objetos con intención · productos que transforman</div>
+      </div>
+      <div class="mkt-tabs">
+        <button class="mkt-tab active" onclick="mktTab('catalogo',this)">catálogo</button>
+        <button class="mkt-tab" onclick="mktTab('mapa',this)">mapa del ecosistema</button>
+        <button class="mkt-tab" onclick="mktTab('timeline',this)">línea del tiempo</button>
+      </div>
+
+      <!-- CATÁLOGO -->
+      <div class="mkt-view active" id="mv-catalogo">
+        <div class="market-filters">
+          <button class="filter-btn active" onclick="filterProducts('all',this)">todo</button>
+          <button class="filter-btn" onclick="filterProducts('digital',this)">digital</button>
+          <button class="filter-btn" onclick="filterProducts('nft',this)">NFT · códice</button>
+          <button class="filter-btn" onclick="filterProducts('physical',this)">físico</button>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+      </div>
+
+      <!-- MAPA DEL ECOSISTEMA -->
+      <div class="mkt-view" id="mv-mapa">
+        <div class="map-wrap" id="ecoMap">
+          <canvas class="map-canvas" id="ecoCanvas"></canvas>
+          <div class="map-tooltip" id="mapTooltip"></div>
+          <div class="map-controls">
+            <button class="map-ctrl" onclick="mapZoom(1.2)" title="zoom in">+</button>
+            <button class="map-ctrl" onclick="mapZoom(0.8)" title="zoom out">−</button>
+            <button class="map-ctrl" onclick="mapReset()" title="reset">⊙</button>
+          </div>
+          <div class="map-legend">
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:#c9a96e"></div>libros · códices</div>
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:#627eea"></div>módulos · plataforma</div>
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:#00ff88"></div>conceptos · puentes</div>
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:#ff8890"></div>tecnología · ethereum</div>
+          </div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--text-muted);margin-top:.75rem;text-align:center;letter-spacing:.1em">arrastra · haz clic en los nodos · usa scroll para zoom</div>
+      </div>
+
+      <!-- TIMELINE -->
+      <div class="mkt-view" id="mv-timeline">
+        <div class="timeline-wrap">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:1.5rem;line-height:1.6">
+            Vera Æther es una obra en expansión. Cada tomo, cada módulo, cada iteración de Sacred forma parte de un mismo movimiento — haz clic en cada nodo para expandirlo.
+          </div>
+          <div class="timeline-axis">
+            <div class="timeline-line"></div>
+            <div id="timelineNodes"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOOK DETAIL VIEW (hidden by default) -->
+  <div id="mkt-detail-view" style="display:none;width:100%;height:100%;overflow-y:auto">
+    <div class="solar-wrap" id="detailInner"></div>
+  </div>
+
+</div>
+
+<!-- CÓDICE — ARTICLE MODE -->
+<div class="page" id="codex">
+  <div id="codex-list-view" class="codex-article-list">
+    <div class="codex-list-header">
+      <div class="codex-list-title">Códice</div>
+      <div class="codex-list-sub">libros · capítulos · notas de IA · programación</div>
+    </div>
+    <div class="codex-filters">
+      <button class="codex-filter active" onclick="codexFilter('all',this)">todo</button>
+      <button class="codex-filter" onclick="codexFilter('genesis',this)">génesis cuántico</button>
+      <button class="codex-filter" onclick="codexFilter('tech',this)">tecnología sagrada</button>
+      <button class="codex-filter" onclick="codexFilter('synth',this)">synth world</button>
+      <button class="codex-filter" onclick="codexFilter('code',this)">programación</button>
+      <button class="codex-filter" onclick="codexFilter('ia',this)">inteligencia avanzada</button>
+    </div>
+    <div id="codexArticleList"></div>
+  </div>
+  <div id="codex-reader-view" class="article-reader">
+    <button class="article-back" onclick="closeArticle()">← volver al códice</button>
+    <div id="articleContent"></div>
+  </div>
+</div>
+
+<!-- SIGNAL — FINANCIAL INTELLIGENCE -->
+<div class="page" id="signal">
+  <div class="signal-wrap">
+    <div class="signal-header">
+      <div class="signal-title-block">
+        <div class="signal-title">Signal</div>
+        <div class="signal-sub">inteligencia financiera · cripto · metales · ETFs</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <div class="signal-live"><div class="signal-live-dot"></div>datos en vivo</div>
+        <button onclick="refreshSignal()" style="padding:.35rem .8rem;background:none;border:1px solid var(--border);border-radius:3px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.62rem;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#00ff8866';this.style.color='#00ff88'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">↻ actualizar</button>
+      </div>
+    </div>
+
+    <div class="signal-disclaimer">
+      ⚠ Signal es una herramienta educativa de análisis de mercado. No constituye asesoría financiera ni recomendación de inversión. Toda decisión de inversión implica riesgo de pérdida de capital. Consulta a un asesor financiero certificado antes de operar.
+    </div>
+
+    <!-- ASSET GRID -->
+    <div class="signal-grid" id="signalGrid">
+      <!-- rendered by JS -->
+    </div>
+
+    <!-- AI ANALYSIS PANEL -->
+    <div class="signal-analysis">
+      <div class="signal-analysis-header">
+        <div class="signal-analysis-title">
+          <div class="signal-live-dot" style="background:#627eea"></div>
+          Aurora · Análisis de Mercado IA
+        </div>
+        <button class="signal-analysis-btn" id="analyzeBtn" onclick="runMarketAnalysis()">Analizar mercado ahora</button>
+      </div>
+      <div class="signal-analysis-body">
+        <div class="signal-analysis-text" id="analysisText" style="color:var(--text-muted);font-style:italic">
+          Presiona "Analizar mercado ahora" para que Aurora genere un análisis de condiciones actuales basado en precios en vivo, patrones técnicos y contexto macroeconómico.
+        </div>
+      </div>
+    </div>
+
+    <!-- WATCHLIST -->
+    <div class="signal-watchlist">
+      <div class="signal-watchlist-header">tabla de activos · señales consolidadas</div>
+      <div class="watchlist-row header">
+        <div class="wl-name">activo</div>
+        <div class="wl-price">precio</div>
+        <div class="wl-change">24h</div>
+        <div class="wl-signal">señal IA</div>
+      </div>
+      <div id="watchlistRows"></div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <h3 id="modalTitle"></h3>
+    <p id="modalDesc"></p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModalDirect()">cancelar</button>
+      <button class="modal-confirm" id="modalConfirm">adquirir</button>
+    </div>
+  </div>
+</div>
+
+<!-- WALLET PANEL -->
+<div class="wallet-panel" id="walletPanel">
+  <button class="wallet-close" onclick="toggleWallet()">×</button>
+  <div class="wallet-section">
+    <div class="wallet-label">dirección</div>
+    <div class="wallet-address" id="walletAddress">—</div>
+  </div>
+  <div class="wallet-section">
+    <div class="wallet-label">balance</div>
+    <div class="wallet-balance" id="walletBalance">0.000 ETH</div>
+    <div class="wallet-balance-sub" id="walletUSD">≈ $0.00 USD</div>
+  </div>
+  <div class="wallet-section">
+    <div class="wallet-label">activos sacred</div>
+    <div id="walletAssets">
+      <div class="wallet-asset"><span class="asset-name">Tokens SACRED</span><span class="asset-val">—</span></div>
+      <div class="wallet-asset"><span class="asset-name">Códices NFT</span><span class="asset-val">—</span></div>
+    </div>
+  </div>
+  <div class="wallet-section">
+    <div class="wallet-label">transacciones</div>
+    <div id="walletTx"><div style="font-size:.8rem;color:var(--text-muted);font-style:italic">sin historial aún</div></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  BOOK DATA
+// ═══════════════════════════════════════
+const BOOKS = {
+  1: {
+    id:1, tag:'códice', type:'nft', badge:'nft',
+    name:'Vera Æther · Tomo I',
+    shortName:'Génesis Cuántico',
+    desc:'Origen · Cosmos · Consciencia. Un codex de física, filosofía y percepción sagrada.',
+    price:'$420 MXN', eth:'0.008 ETH',
+    edition:111, minted:26,
+    color:'#c9a96e', colorDim:'#c9a96e22',
+    symbol:'⚛️',
+    badges:[['Génesis Cuántico','#fff8'],['Tomo I','gold'],['NFT · Base','eth'],['111 ediciones','red']],
+    author:'Diego Vera · Sacred · 2025',
+    stars:5, reviewCount:14,
+    descLong:`<p class="solar-desc-text"><em>Antes de toda forma existía la potencia de todas las formas. Antes de todo movimiento, la posibilidad de todo movimiento. Eso que no tiene nombre es el principio de lo que tiene nombre.</em></p>
+<p class="solar-desc-text">Vera Æther · Tomo I es un codex de consciencia y tecnología sagrada que fusiona física cuántica, cosmología, astrología, cábala, geometría sagrada y neuroesoterismo en un solo sistema coherente. <em>No enseña qué creer. Enseña cómo percibir.</em></p>
+<p class="solar-desc-text">Cada capítulo construye un puente riguroso entre ciencia contemporánea y tradición simbólica — sin colapsar uno en el otro. El vacío cuántico y el vacío primordial. La nucleosíntesis estelar y el mito del origen cósmico. Los genes CLOCK del reloj circadiano y los ciclos astrológicos. Estructuras paralelas que el pensamiento ordinario mantiene separadas, aquí leídas juntas por primera vez.</p>
+<p class="solar-desc-text"><em>No somos seres que observan el universo desde afuera. Somos regiones del universo que se han organizado hasta el punto de poder contemplarse a sí mismas.</em></p>`,
+    index:[
+      ['I. Origen Infinito','Demiurgo · Vacío Primordial · Danza de la Energía'],
+      ['II. Astronomía & Astrología','Ciencia y Arquetipos · Constelaciones · Influencia Estelar'],
+      ['III. Redes Cuánticas & Ser Multidimensional','Entrelazamiento · Superposición · Campos'],
+      ['IV. Gnosis Personal','Conocimiento directo · Percepción expandida'],
+      ['V. Cábala Cuántica & Geometría Sagrada','Simetría · Árbol de la Vida · Formas primordiales'],
+      ['VI. Cuerpos Energéticos & Vibraciones','Campos sutiles · Frecuencia · Resonancia'],
+      ['VII. Biología Planetaria & Biotecnología Cuántica','Vida como información · Códigos biológicos'],
+      ['VIII. Neuroesoterismo & Psicogeometría','Mente · Energía · Arquitectura mental'],
+    ],
+    reviews:[
+      {text:'La distinción entre "condición de posibilidad" y "causa" en el primer capítulo cambió cómo entiendo mi propia existencia. No soy solo un efecto de causas previas — soy la actualización de una potencialidad. Eso es radicalmente diferente.',author:'Camila R. · Guadalajara',stars:5},
+      {text:'El capítulo de nucleosíntesis estelar me hizo llorar. "El hierro en tu sangre proviene del colapso violento de gigantes estelares." No es metáfora — es nucleosíntesis estelar. Y eso es más poético que cualquier metáfora.',author:'Adrián M. · CDMX',stars:5},
+      {text:'El capítulo de Astronomía y Astrología es el texto más equilibrado que he leído sobre el tema. No valida ni descarta — mapea. La distinción entre arquetipo y causa es la única postura intelectualmente honesta posible.',author:'Sofía L. · Monterrey',stars:5},
+      {text:'Vengo del hermetismo clásico y este codex dialoga con esa tradición desde adentro. El paralelo entre el Ein Sof cabalístico y el espacio de Hilbert cuántico no es una equivalencia — es una resonancia que abre algo.',author:'Marco T. · Barcelona',stars:5},
+    ],
+    comments:[
+      {name:'Lucía V.',date:'hace 3 días',body:'El ejercicio del "Umbral del Silencio" del Capítulo I lo practiqué tres días seguidos: atender al espacio entre pensamientos sin nombrarlo. Algo en mí comenzó a distinguir entre el pensamiento y el espacio que lo hace posible.'},
+      {name:'Inti B.',date:'hace 1 semana',body:'"No somos seres que observan el universo desde afuera. Somos regiones del universo que se han organizado hasta el punto de poder contemplarse a sí mismas." Esta frase del Capítulo II me acompaña todos los días.'},
+    ],
+    mandala: 'solar',
+  },
+  2: {
+    id:2, tag:'códice', type:'nft', badge:'nft',
+    name:'Vera Æther · Tomo II',
+    shortName:'Tecnología Sagrada',
+    desc:'Ciencia · Magia · Manifestación. Donde la física nuclear se convierte en alquimia.',
+    price:'$420 MXN', eth:'0.008 ETH',
+    edition:111, minted:8,
+    color:'#627eea', colorDim:'#627eea22',
+    symbol:'⬡',
+    badges:[['Tecnología Sagrada','eth'],['Tomo II','gold'],['NFT · Base','eth'],['111 ediciones','red']],
+    author:'Diego Vera · Sacred · 2025',
+    stars:5, reviewCount:6,
+    descLong:`<p class="solar-desc-text"><em>E = mc² · ΔxΔp ≥ ℏ/2 · iℏ∂ψ/∂t = Ĥψ</em></p><p class="solar-desc-text"><em>Las ecuaciones que describen la materia son también las ecuaciones que describen lo sagrado.</em></p>
+<p class="solar-desc-text">La fuerza nuclear fuerte — la más poderosa del universo — opera en la escala más pequeña que hemos medido. Lo más fundamental no siempre es lo más visible. Vera Æther · Tomo II desciende al núcleo de la materia con las herramientas más avanzadas disponibles: el Modelo Estándar, el teorema de Noether, la mecánica cuántica relativista — y los sistemas simbólicos que los preceden por milenios.</p>
+<p class="solar-desc-text">Catorce capítulos que van de la física nuclear a la robótica, del software cuántico a la biomimética esotérica. La transmutación alquímica era el sueño central de la alquimia durante siglos. <em>Los aceleradores de partículas lo hacen literalmente.</em> El sueño era real — el mecanismo era nuclear, no filosófico.</p>
+<p class="solar-desc-text">El segundo movimiento de Vera Æther: si el Tomo I muestra el origen, el Tomo II muestra la arquitectura indestructible de lo que emergió de él.</p>`,
+    index:[
+      ['01. Viajes Interdimensionales & Sincronías','Física de la no-localidad'],
+      ['02. Magia del Caos Cuántico & Rituales','Teoría del caos aplicada'],
+      ['03. Alquimia Interna & Geometrías Vivas','Transmutación como proceso'],
+      ['04. Hermetismo & Física Moderna','Como arriba, así abajo — verificado'],
+      ['05. Física Nuclear & Matemáticas Avanzadas','E=mc² · Modelo Estándar · Noether'],
+      ['06. Lenguajes de Programación & Software Cuántico','Código como ritual'],
+      ['07. Mecatrónica & Robótica','Cuerpo extendido · Extensión tecnológica'],
+      ['08. Estados de Materia & Tabla Periódica','Alquimia verificada'],
+      ['09. Ingeniería & Física Aplicada','Construcción sagrada'],
+      ['10. Biotecnología & Nanotecnología','El cuerpo como laboratorio'],
+      ['11. Neuroesoterismo & Alquimia Digital','La mente como interfaz'],
+      ['12. Biomimética Esotérica','Naturaleza como código fuente'],
+      ['13. Psicología & Psiquiatría Avanzada','Cartografías interiores'],
+      ['14. Música: Vibración & Creación Cuántica','Sonido como arquitectura'],
+    ],
+    reviews:[
+      {text:'El Capítulo V cita la discrepancia de 10¹²⁰ órdenes de magnitud entre el vacío cuántico predicho y el observado y la presenta como invitación, no como fracaso. "El mayor desacuerdo entre teoría y observación en la historia de la ciencia" — y aún así el codex avanza. Eso es honestidad intelectual real.',author:'Renata M. · CDMX',stars:5},
+      {text:'"La transmutación de elementos era el sueño central de la alquimia durante siglos. La física nuclear lo hace literalmente posible." Esa frase sola vale el libro. El teorema de Noether finalmente explicado para humanos — y conectado a las simetrías herméticas sin trampa.',author:'Sebastián V. · Buenos Aires',stars:5},
+    ],
+    comments:[
+      {name:'Diego K.',date:'hace 5 días',body:'"La materia no es sólida. La materia es resistencia. Y la resistencia es información sobre dónde termina un campo y dónde empieza otro." Llevo días sin poder ver la materia de la misma manera.'},
+      {name:'Paula S.',date:'hace 1 semana',body:'El zoológico de partículas del Modelo Estándar con la nota: "El bosón de Higgs no da masa a todo. Los protones deben el 99% de su masa a la energía cinética de los quarks." Esa nota al margen desmonta mitos que llevaba años cargando.'},
+    ],
+    mandala: 'tech',
+  },
+  3: {
+    id:3, tag:'guía', type:'digital', badge:'digital',
+    name:'Synth World of The Ego',
+    shortName:'Synth World',
+    desc:'El arquitecto inconsciente de tu realidad — tecnología y consciencia fusionadas.',
+    price:'$0 MXN', eth:'gratuito',
+    edition:null, minted:null,
+    color:'#00ff88', colorDim:'#00ff8822',
+    symbol:'⌬',
+    badges:[['Gratuito','green'],['Digital','#fff8'],['Consciencia','#fff8']],
+    author:'Diego Vera · Sacred · 2025',
+    stars:5, reviewCount:31,
+    descLong:`<p class="solar-desc-text">Antes de que abras los ojos cada mañana, <em>algo ya está trabajando.</em> Hay un arquitecto en ti que no duerme — que lleva décadas construyendo el mundo que experimentas sin pedirte permiso.</p>
+<p class="solar-desc-text">Synth World of The Ego es un ebook híbrido en formato de simulación: terminal de comandos, código filosófico, prosa poética bilingüe. El ego como arquitecto inconsciente de la realidad — visto a través del lenguaje de la tecnología.</p>
+<p class="solar-desc-text">Disponible de forma <em>completamente gratuita</em> en el Códice de Sacred — el primer objeto sagrado de la plataforma al alcance de todos.</p>`,
+    index:[
+      ['Boot Sequence','prólogo · inicialización del sistema'],
+      ['Arquitecto Ciego','PID 001-004 · percepción filtrada'],
+      ['El Código del Yo','ego_core.js · origen del sistema'],
+      ['Loops Eternos','detect_loops --depth=lifetime'],
+      ['Error 404: Realidad','fatal exception · el glitch sagrado'],
+      ['El Despertar del Bug','insight.js · el observador'],
+      ['Fork del Alma','git fork ego_v1.0 --branch=conscious_self'],
+      ['Nuevo Runtime','conscious_architecture_mode'],
+    ],
+    reviews:[
+      {text:'Primera vez que un libro me hace sentir que soy el sistema y el usuario al mismo tiempo.',author:'Andrea F. · Guadalajara',stars:5},
+      {text:'El formato terminal es un acierto total. Leer filosofía en código cambia completamente la experiencia.',author:'Luis P. · Monterrey',stars:5},
+      {text:'Gratuito y uno de los textos más originales que he leído este año. Sacred tiene algo especial.',author:'Valentina C. · Bogotá',stars:5},
+    ],
+    comments:[
+      {name:'Matías R.',date:'hace 2 días',body:'El loop detector me describió exactamente tres patrones que llevo años repitiendo. Escalofriante y liberador.'},
+    ],
+    mandala: 'tech',
+    freeInCodex: true,
+  },
+  4: {
+    id:4, tag:'filosofía', type:'digital', badge:'digital',
+    name:'Principios de Libertad',
+    shortName:'Principios de Libertad',
+    desc:'Economía personal y libertad financiera desde una perspectiva joven y disruptiva.',
+    price:'$250 MXN', eth:'0.004 ETH',
+    edition:null, minted:null,
+    color:'#c9a96e', colorDim:'#c9a96e15',
+    symbol:'◈',
+    badges:[['Filosofía','gold'],['Digital','#fff8'],['Finanzas','green']],
+    author:'Diego Vera · Sacred · 2025',
+    stars:5, reviewCount:9,
+    descLong:`<p class="solar-desc-text">La libertad financiera no es una cifra en una cuenta bancaria. Es una <em>relación con el tiempo, con el intercambio, con el valor.</em></p>
+<p class="solar-desc-text">Principios de Libertad reescribe las reglas de la economía personal desde cero — sin los marcos del sistema educativo tradicional, sin el lenguaje corporativo, sin el miedo como motor.</p>
+<p class="solar-desc-text">Un manifiesto práctico para la generación que creció conectada, que opera en múltiples mundos a la vez, y que entiende que el dinero es energía — y la energía se puede dirigir con intención.</p>`,
+    index:[
+      ['I. El Mito de la Estabilidad','¿qué es realmente seguro?'],
+      ['II. Tiempo como Capital','el recurso que no regresa'],
+      ['III. Economía de la Atención','tu energía como moneda'],
+      ['IV. Flujos y Activos','pensar en sistemas'],
+      ['V. El Emprendedor Espiritual','negocio con consciencia'],
+      ['VI. Principios Fundamentales','7 leyes de la libertad personal'],
+    ],
+    reviews:[
+      {text:'Por fin un libro de finanzas que habla el idioma de mi generación. Sin tecnicismos innecesarios, sin condescendencia.',author:'Jimena L. · CDMX',stars:5},
+      {text:'El capítulo sobre tiempo como capital cambió cómo veo mis decisiones diarias.',author:'Carlos M. · Tijuana',stars:5},
+    ],
+    comments:[],
+    mandala: 'geo',
+  },
+};
+
+const BADGE_LABELS={nft:'NFT · códice',digital:'digital',physical:'físico'};
+const PRODUCTS = Object.values(BOOKS).concat([
+  {id:5,tag:'producto',name:'Pasto Sintético Premium',desc:'Variedad americana · rollo por m². Para instaladores y proyectos residenciales en Los Cabos.',price:'$180 MXN/m²',eth:'0.003 ETH',type:'physical',badge:'physical'},
+]);
+
+// ═══════════════════════════════════════
+//  MANDALA SVG GENERATORS
+// ═══════════════════════════════════════
+function solarMandala(){
+  return `<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="width:260px;height:260px;filter:drop-shadow(0 0 20px #c9a96e22)">
+  <defs>
+    <radialGradient id="gG1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#c9a96e" stop-opacity="1"/><stop offset="100%" stop-color="#7a6140" stop-opacity="0.2"/></radialGradient>
+    <radialGradient id="gG2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0d88a"/><stop offset="100%" stop-color="#c9a96e" stop-opacity="0.5"/></radialGradient>
+  </defs>
+  <g style="animation:mandalaOuter 60s linear infinite;transform-origin:150px 150px" opacity=".35">
+    <circle cx="150" cy="150" r="138" fill="none" stroke="#c9a96e" stroke-width=".5"/>
+    <circle cx="150" cy="150" r="132" fill="none" stroke="#c9a96e" stroke-width=".3" stroke-dasharray="4,8"/>
+    <g id="op1"><ellipse cx="150" cy="18" rx="4" ry="12" fill="#c9a96e" opacity=".5"/></g>
+    ${[15,30,45,60,75,90,105,120,135,150,165,180,195,210,225,240,255,270,285,300,315,330,345].map(r=>`<use href="#op1" transform="rotate(${r} 150 150)"/>`).join('')}
+  </g>
+  <g style="animation:mandalaMid 40s linear infinite reverse;transform-origin:150px 150px" opacity=".65">
+    <circle cx="150" cy="150" r="88" fill="none" stroke="#c9a96e" stroke-width=".6"/>
+    <g id="mp1"><path d="M150,62 Q162,106 150,118 Q138,106 150,62" fill="#c9a96e" opacity=".22" stroke="#c9a96e" stroke-width=".7"/></g>
+    ${[22.5,45,67.5,90,112.5,135,157.5,180,202.5,225,247.5,270,292.5,315,337.5].map(r=>`<use href="#mp1" transform="rotate(${r} 150 150)"/>`).join('')}
+  </g>
+  <g style="animation:mandalaInner 25s linear infinite;transform-origin:150px 150px" opacity=".85">
+    <circle cx="150" cy="150" r="62" fill="none" stroke="#c9a96e" stroke-width=".9"/>
+    <g id="ip1"><path d="M150,88 Q168,120 150,132 Q132,120 150,88" fill="#c9a96e" opacity=".3" stroke="#c9a96e" stroke-width="1"/></g>
+    ${[45,90,135,180,225,270,315].map(r=>`<use href="#ip1" transform="rotate(${r} 150 150)"/>`).join('')}
+    <rect x="122" y="122" width="56" height="56" fill="none" stroke="#c9a96e" stroke-width=".6" transform="rotate(45 150 150)" opacity=".5"/>
+  </g>
+  <g style="animation:mandalaCore 8s ease-in-out infinite alternate;transform-origin:150px 150px">
+    <circle cx="150" cy="150" r="36" fill="url(#gG1)" opacity=".15"/>
+    <circle cx="150" cy="150" r="36" fill="none" stroke="#c9a96e" stroke-width="1.2"/>
+    <g id="cp1"><path d="M150,114 Q162,132 150,144 Q138,132 150,114" fill="#c9a96e" opacity=".4"/></g>
+    ${[60,120,180,240,300].map(r=>`<use href="#cp1" transform="rotate(${r} 150 150)"/>`).join('')}
+    <circle cx="150" cy="150" r="18" fill="url(#gG2)" opacity=".5"/>
+    <circle cx="150" cy="150" r="18" fill="none" stroke="#f0d88a" stroke-width="1"/>
+    <circle cx="150" cy="150" r="5" fill="#f0d88a"/>
+    <circle cx="150" cy="150" r="2.5" fill="#fff" opacity=".9"/>
+  </g>
+  <style>
+    @keyframes mandalaOuter{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    @keyframes mandalaMid{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    @keyframes mandalaInner{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    @keyframes mandalaCore{from{transform:scale(1);opacity:.7}to{transform:scale(1.06);opacity:1}}
+  </style>
+</svg>`;
+}
+
+function techMandala(color='#627eea'){
+  const c=color;
+  return `<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="width:260px;height:260px;filter:drop-shadow(0 0 20px ${c}22)">
+  <style>
+    @keyframes tOuter{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    @keyframes tMid{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+    @keyframes tCore{from{transform:scale(1)}to{transform:scale(1.05)}}
+  </style>
+  <g style="animation:tOuter 50s linear infinite;transform-origin:150px 150px" opacity=".4">
+    <circle cx="150" cy="150" r="138" fill="none" stroke="${c}" stroke-width=".4" stroke-dasharray="6,4"/>
+    <circle cx="150" cy="150" r="125" fill="none" stroke="${c}" stroke-width=".3" stroke-dasharray="2,8"/>
+    ${[0,30,60,90,120,150,180,210,240,270,300,330].map(r=>{
+      const rad=r*Math.PI/180;
+      const x=150+132*Math.sin(rad), y=150-132*Math.cos(rad);
+      return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="none" stroke="${c}" stroke-width=".8" transform="rotate(${r} ${x} ${y})"/>`;
+    }).join('')}
+  </g>
+  <g style="animation:tMid 35s linear infinite;transform-origin:150px 150px" opacity=".6">
+    <polygon points="150,58 194,100 194,200 150,242 106,200 106,100" fill="none" stroke="${c}" stroke-width=".7"/>
+    <circle cx="150" cy="150" r="85" fill="none" stroke="${c}" stroke-width=".5" stroke-dasharray="4,6"/>
+    ${[0,60,120,180,240,300].map(r=>{
+      const rad=r*Math.PI/180;
+      const x=150+85*Math.sin(rad), y=150-85*Math.cos(rad);
+      return `<circle cx="${x}" cy="${y}" r="5" fill="none" stroke="${c}" stroke-width="1"/>`;
+    }).join('')}
+  </g>
+  <g opacity=".75">
+    <circle cx="150" cy="150" r="55" fill="none" stroke="${c}" stroke-width="1"/>
+    ${[0,45,90,135,180,225,270,315].map(r=>{
+      const rad=r*Math.PI/180;
+      const x1=150+38*Math.sin(rad), y1=150-38*Math.cos(rad);
+      const x2=150+55*Math.sin(rad), y2=150-55*Math.cos(rad);
+      return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width=".8"/>`;
+    }).join('')}
+    <polygon points="150,110 182,130 182,170 150,190 118,170 118,130" fill="${c}" opacity=".08" stroke="${c}" stroke-width=".8"/>
+  </g>
+  <g style="animation:tCore 6s ease-in-out infinite alternate;transform-origin:150px 150px">
+    <circle cx="150" cy="150" r="30" fill="${c}" opacity=".12"/>
+    <circle cx="150" cy="150" r="30" fill="none" stroke="${c}" stroke-width="1.5"/>
+    <text x="150" y="156" text-anchor="middle" font-size="18" fill="${c}" font-family="monospace">⬡</text>
+    <circle cx="150" cy="150" r="6" fill="${c}" opacity=".8"/>
+  </g>
+</svg>`;
+}
+
+function geoMandala(){
+  return `<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="width:260px;height:260px;filter:drop-shadow(0 0 20px #c9a96e18)">
+  <style>@keyframes gOuter{from{transform:rotate(0)}to{transform:rotate(360deg)}} @keyframes gMid{from{transform:rotate(0)}to{transform:rotate(-360deg)}} @keyframes gPulse{from{opacity:.6}to{opacity:1}}</style>
+  <g style="animation:gOuter 70s linear infinite;transform-origin:150px 150px" opacity=".35">
+    <circle cx="150" cy="150" r="138" fill="none" stroke="#c9a96e" stroke-width=".4"/>
+    ${[0,36,72,108,144,180,216,252,288,324].map(r=>{const a=r*Math.PI/180,x=150+138*Math.sin(a),y=150-138*Math.cos(a);return `<circle cx="${x}" cy="${y}" r="3" fill="#c9a96e" opacity=".5"/>`;}).join('')}
+  </g>
+  <g style="animation:gMid 45s linear infinite;transform-origin:150px 150px" opacity=".55">
+    <polygon points="150,52 238,102 238,202 150,252 62,202 62,102" fill="none" stroke="#c9a96e" stroke-width=".7"/>
+    <polygon points="150,248 62,198 62,98 150,48 238,98 238,198" fill="none" stroke="#c9a96e" stroke-width=".4" stroke-dasharray="3,5"/>
+  </g>
+  <g opacity=".8">
+    <circle cx="150" cy="150" r="60" fill="none" stroke="#c9a96e" stroke-width=".9"/>
+    <polygon points="150,90 198,120 198,180 150,210 102,180 102,120" fill="#c9a96e" opacity=".07" stroke="#c9a96e" stroke-width=".7"/>
+    <polygon points="150,210 102,180 102,120 150,90 198,120 198,180" fill="none" stroke="#c9a96e" stroke-width=".4" transform="rotate(30 150 150)"/>
+  </g>
+  <g style="animation:gPulse 5s ease-in-out infinite alternate;transform-origin:150px 150px">
+    <circle cx="150" cy="150" r="28" fill="#c9a96e" opacity=".12"/>
+    <circle cx="150" cy="150" r="28" fill="none" stroke="#c9a96e" stroke-width="1.5"/>
+    <text x="150" y="157" text-anchor="middle" font-size="20" fill="#c9a96e" font-family="serif">◈</text>
+  </g>
+</svg>`;
+}
+
+function getMandala(book){
+  if(book.mandala==='solar') return solarMandala();
+  if(book.mandala==='tech') return techMandala(book.color);
+  return geoMandala();
+}
+
+// ═══════════════════════════════════════
+//  MARKET GRID
+// ═══════════════════════════════════════
+function renderProducts(filter='all'){
+  const grid=document.getElementById('productsGrid');
+  const all=[...Object.values(BOOKS),{id:5,tag:'producto',name:'Pasto Sintético Premium',desc:'Variedad americana · rollo por m². Instaladores y proyectos residenciales en Los Cabos.',price:'$180 MXN/m²',eth:'0.003 ETH',type:'physical',badge:'physical'}];
+  const filtered=filter==='all'?all:all.filter(p=>p.type===filter);
+  grid.innerHTML=filtered.map(p=>`
+    <div class="product-card" onclick="openBookDetail(${p.id})">
+      <div class="product-tag">${p.tag}</div>
+      <div class="product-badge badge-${p.badge}">${BADGE_LABELS[p.badge]||p.badge}</div>
+      <div class="product-name">${p.name}</div>
+      <div class="product-desc">${p.desc}</div>
+      <div class="product-footer">
+        <div>
+          <div class="product-price" style="color:${p.id<=4?BOOKS[p.id].color:'var(--gold)'}">${p.price}</div>
+          <div class="product-price-eth">${p.eth}</div>
+        </div>
+        <button class="product-acquire" onclick="event.stopPropagation();openBookDetail(${p.id})" style="${p.id<=4?`border-color:${BOOKS[p.id].colorDim||''};color:${BOOKS[p.id].color}`:''}">ver más</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterProducts(type,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProducts(type);
+}
+
+// ═══════════════════════════════════════
+//  BOOK DETAIL VIEW
+// ═══════════════════════════════════════
+function openBookDetail(id){
+  const book=BOOKS[id];
+  if(!book){return;}
+  document.getElementById('mkt-grid-view').style.display='none';
+  const dv=document.getElementById('mkt-detail-view');
+  dv.style.display='block';
+  dv.style.setProperty('--bk-color', book.color);
+
+  const editionBlock = book.edition ? `
+    <div class="solar-edition-counter">
+      <div class="solar-edition-num">${book.minted} <span style="font-size:1rem;color:var(--text-dim)">/ ${book.edition}</span></div>
+      <div class="solar-edition-sub">ediciones acuñadas</div>
+      <div class="solar-edition-bar"><div class="solar-edition-fill" style="width:${Math.round(book.minted/book.edition*100)}%;background:linear-gradient(90deg,${book.colorDim||book.color+'44'},${book.color})"></div></div>
+    </div>` : `<div class="solar-edition-counter" style="border-color:${book.colorDim}">
+      <div class="solar-edition-num" style="color:${book.color};font-size:1.2rem">Acceso libre</div>
+      <div class="solar-edition-sub">disponible en el códice</div>
+    </div>`;
+
+  const badgesHTML = book.badges.map(([label,type])=>{
+    const cl=type==='gold'?'sb-tomo':type==='eth'?'sb-nft':type==='red'?'sb-limited':type==='green'?'':'sb-genesis';
+    const style=type==='green'?`background:#00ff8812;border:1px solid #00ff8830;color:#00ff88`:'';
+    return `<span class="solar-badge ${cl}" style="${style}">${label}</span>`;
+  }).join('');
+
+  const reviewsHTML = book.reviews.map(r=>`
+    <div class="solar-review" style="border-color:${book.colorDim||'var(--border)'}">
+      <p class="review-text">${r.text}</p>
+      <div class="review-footer"><span class="review-author">${r.author}</span><span class="review-stars" style="color:${book.color}">${'★'.repeat(r.stars)}</span></div>
+    </div>`).join('');
+
+  const commentsHTML = book.comments.map(c=>`
+    <div class="solar-comment">
+      <div class="comment-header"><span class="comment-name" style="color:${book.color}">${c.name}</span><span class="comment-date">${c.date}</span></div>
+      <div class="comment-body">${c.body}</div>
+    </div>`).join('');
+
+  const indexHTML = book.index.map(([name,sub])=>`
+    <div class="solar-index-item">
+      <span class="solar-index-name">${name}</span>
+      <span class="solar-index-num">${sub}</span>
+    </div>`).join('');
+
+  const acquireLabel = book.freeInCodex ? `☽ &nbsp; Leer gratis en el Códice` : `${book.symbol} &nbsp; Adquirir · NFT`;
+  const priceNote = book.freeInCodex
+    ? 'Disponible de forma completamente gratuita en el módulo Códice de Sacred.'
+    : 'NFT de edición limitada · red Base (Ethereum L2) · acceso permanente vía IPFS · transferible y coleccionable';
+
+  document.getElementById('detailInner').innerHTML = `
+    <div style="margin-bottom:1.5rem">
+      <button onclick="closeBookDetail()" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:.35rem .9rem;cursor:pointer;font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;transition:all .15s" onmouseover="this.style.color='${book.color}'" onmouseout="this.style.color='var(--text-dim)'">← volver al mercado</button>
+    </div>
+
+    <div class="solar-hero">
+      <div class="solar-mandala-col">
+        ${getMandala(book)}
+        <div class="solar-mandala-label" style="color:${book.colorDim||book.color+'44'}">${book.name} · Sello</div>
+        ${editionBlock}
+      </div>
+
+      <div class="solar-info-col">
+        <div class="solar-badge-row">${badgesHTML}</div>
+        <div class="solar-book-title" style="color:${book.color}44;letter-spacing:.3em">${book.name}</div>
+        <div class="solar-tomo-title">${book.shortName.includes('·')?book.shortName:`<span class="solar-tomo-em" style="color:${book.color}">${book.shortName}</span>`}</div>
+        <div class="solar-tomo-sub">${book.desc}</div>
+        <div class="solar-author">${book.author}</div>
+
+        <div class="solar-stars">
+          <div class="stars-icons" style="color:${book.color}">${'★'.repeat(book.stars)}</div>
+          <div class="stars-count">${book.stars}.0 · ${book.reviewCount} reseñas</div>
+        </div>
+
+        <div class="solar-price-box" style="border-color:${book.colorDim||book.color+'22'}">
+          <div class="solar-price-row">
+            <div class="solar-price-main" style="color:${book.color}">${book.price}</div>
+            ${!book.freeInCodex?`<div class="solar-price-eth">${book.eth}</div>`:''}
+          </div>
+          <div class="solar-price-note">${priceNote}</div>
+        </div>
+
+        <button class="solar-acquire-btn" style="background:linear-gradient(135deg,${book.color},${book.colorDim||book.color+'88'});color:#0a0a0f"
+          onclick="${book.freeInCodex?`showPage('codex',document.querySelectorAll('.nav-tab')[2])`:`bookAcquire(${book.id})`}">
+          ${acquireLabel}
+        </button>
+        <div class="solar-wallet-note">
+          <div class="solar-eth-dot" style="background:${book.color}"></div>
+          ${book.freeInCodex?'Acceso inmediato · sin wallet requerida':'Requiere wallet Ethereum · MetaMask, Coinbase Wallet o WalletConnect'}
+        </div>
+
+        <div class="solar-tabs">
+          <button class="solar-tab active" onclick="solarTab('desc',${book.id},this)">descripción</button>
+          <button class="solar-tab" onclick="solarTab('cont',${book.id},this)">contenido</button>
+          <button class="solar-tab" onclick="solarTab('res',${book.id},this)">reseñas</button>
+          <button class="solar-tab" onclick="solarTab('com',${book.id},this)">comentarios</button>
+          <button class="solar-tab" onclick="solarTab('con',${book.id},this)">conexiones</button>
+        </div>
+
+        <div class="solar-tab-content active" id="st-desc-${book.id}">${book.descLong}</div>
+
+        <div class="solar-tab-content" id="st-cont-${book.id}">
+          <div class="solar-section-label">índice</div>
+          <div class="solar-index">${indexHTML}</div>
+        </div>
+
+        <div class="solar-tab-content" id="st-res-${book.id}">
+          <div class="solar-section-label">reseñas · lectores</div>
+          <div class="solar-reviews">${reviewsHTML}</div>
+        </div>
+
+        <div class="solar-tab-content" id="st-com-${book.id}">
+          <div class="solar-section-label">comentarios · comunidad</div>
+          <div class="solar-comment-form">
+            <textarea class="solar-comment-input" id="ci-${book.id}" placeholder="¿Qué te mueve de este libro?"></textarea>
+            <div class="solar-comment-row">
+              <input class="solar-comment-name" id="cn-${book.id}" type="text" placeholder="tu nombre o alias"/>
+              <button class="solar-comment-submit" style="border-color:${book.colorDim||book.color+'44'};color:${book.color}" onclick="addBookComment(${book.id})">publicar</button>
+            </div>
+          </div>
+          <div class="solar-comments-list" id="cl-${book.id}">${commentsHTML}</div>
+        </div>
+
+        <div class="solar-tab-content" id="st-con-${book.id}">
+          <div class="connections-wrap">
+            <p class="connections-intro">Cada capítulo de ${book.shortName} es un nodo en una red más amplia. Estas son las conexiones conceptuales que lo vinculan con otras obras, disciplinas y tradiciones dentro del universo Sacred.</p>
+            <div class="connections-grid">${buildConnections(book.id)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function closeBookDetail(){
+  document.getElementById('mkt-detail-view').style.display='none';
+  document.getElementById('mkt-grid-view').style.display='block';
+  document.getElementById('mkt-detail-view').scrollTop=0;
+}
+
+function solarTab(section, bookId, btn){
+  // hide all tab contents for this book
+  document.querySelectorAll(`[id^="st-"][id$="-${bookId}"]`).forEach(t=>t.classList.remove('active'));
+  // deactivate all tab buttons in parent
+  btn.closest('.solar-tabs').querySelectorAll('.solar-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const el=document.getElementById(`st-${section}-${bookId}`);
+  if(el) el.classList.add('active');
+}
+
+// ═══════════════════════════════════════
+//  MARKET TABS
+// ═══════════════════════════════════════
+function mktTab(id, btn){
+  document.querySelectorAll('.mkt-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.mkt-view').forEach(v=>v.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('mv-'+id).classList.add('active');
+  if(id==='mapa') setTimeout(initEcoMap, 50);
+  if(id==='timeline') renderTimeline();
+}
+
+// ═══════════════════════════════════════
+//  CONNECTIONS DATA
+// ═══════════════════════════════════════
+const CONNECTIONS = {
+  1: [
+    {from:'Cap. I · Origen Infinito', label:'resuena con', to:'Synth World · El Código del Yo', desc:'Ambos exploran la potencialidad como estado previo al ser'},
+    {from:'Cap. II · Astronomía & Astrología', label:'se vincula con', to:'Tomo II · Hermetismo & Física', desc:'El "como arriba así abajo" verificado por cronobiología'},
+    {from:'Cap. V · Cábala Cuántica', label:'dialoga con', to:'Tomo II · Matemáticas Sagradas', desc:'El Árbol de la Vida como topología del espacio de Hilbert'},
+    {from:'Cap. VIII · Neuroesoterismo', label:'continúa en', to:'Tomo II · Neuroesoterismo Digital', desc:'La mente expandida como interfaz entre ambos tomos'},
+    {from:'Vacío Primordial', label:'paralelo a', to:'Vacío Cuántico · Tomo II cap. V', desc:'El mismo concepto en dos lenguajes: poético y matemático'},
+    {from:'Cap. VII · Biología Planetaria', label:'se expande en', to:'Tomo II · Biotecnología & Nanotech', desc:'La vida como tecnología cuántica perfecta'},
+  ],
+  2: [
+    {from:'Cap. V · Física Nuclear', label:'fundamenta', to:'Cap. III · Alquimia Interna', desc:'La transmutación real como base de la metáfora alquímica'},
+    {from:'Teorema de Noether', label:'espeja', to:'Tomo I · Geometría Sagrada', desc:'Simetría matemática y simetría simbólica son la misma estructura'},
+    {from:'Cap. VI · Software Cuántico', label:'conecta con', to:'Synth World · Nuevo Runtime', desc:'El código como práctica espiritual en ambas obras'},
+    {from:'Cap. XIV · Música Cuántica', label:'resuena con', to:'Tomo I · Cuerpos Energéticos', desc:'Vibración como lenguaje fundamental del cosmos'},
+    {from:'Modelo Estándar · 17 partículas', label:'paralelo a', to:'Sefirot · 10 emanaciones', desc:'Taxonomías de lo fundamental: física y cabalística'},
+    {from:'Cap. XI · Alquimia Digital', label:'precede a', to:'Sacred · Oráculo IA', desc:'La IA como siguiente fase del neuroesoterismo'},
+  ],
+  3: [
+    {from:'El Arquitecto Ciego', label:'resuena con', to:'Tomo I · Génesis Cuántico', desc:'El ego como filtro de los 11M bits: física de la percepción'},
+    {from:'Loops Eternos', label:'dialoga con', to:'Tomo II · Magia del Caos', desc:'Los atractores extraños como loops en el espacio de fase psicológico'},
+    {from:'Fork del Alma', label:'conecta con', to:'Tomo II · Software Cuántico', desc:'git fork como metáfora de evolución consciente'},
+    {from:'Nuevo Runtime', label:'anticipa', to:'Sacred · Oráculo IA', desc:'El observador consciente como interfaz para la IA sagrada'},
+  ],
+  4: [
+    {from:'Economía de la Atención', label:'fundamenta', to:'Sacred · Ecosistema NFT', desc:'La atención como capital que los tokens SACRED hacen circular'},
+    {from:'El Emprendedor Espiritual', label:'dialoga con', to:'Tomo I · Gnosis Personal', desc:'El negocio como práctica espiritual contemporánea'},
+    {from:'Flujos y Activos', label:'resuena con', to:'Tomo II · Física Nuclear', desc:'Energía que fluye y se conserva: termodinámica y economía'},
+  ],
+};
+
+function buildConnections(bookId){
+  const conns = CONNECTIONS[bookId] || [];
+  if(!conns.length) return '<p style="color:var(--text-muted);font-style:italic;font-family:\'Cormorant Garamond\',serif">Las conexiones para este libro están siendo cartografiadas.</p>';
+  return conns.map(c=>`
+    <div class="connection-card">
+      <div class="conn-from">${c.from}<span class="conn-arrow">→</span><span style="color:var(--gold-dim)">${c.label}</span></div>
+      <div class="conn-label">${c.to}</div>
+      <div class="conn-to">${c.desc}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+//  ECOSYSTEM MAP
+// ═══════════════════════════════════════
+let mapScale=1, mapOffX=0, mapOffY=0, mapDragging=false, mapDragStart={x:0,y:0};
+let mapNodes=[], mapEdges=[], mapAnimFrame=null, hoveredNode=null;
+
+function initEcoMap(){
+  const canvas=document.getElementById('ecoCanvas');
+  if(!canvas) return;
+  const wrap=document.getElementById('ecoMap');
+  canvas.width=wrap.clientWidth;
+  canvas.height=wrap.clientHeight;
+  const W=canvas.width, H=canvas.height, cx=W/2, cy=H/2;
+
+  mapNodes=[
+    // Core
+    {id:'sacred',x:cx,y:cy,r:28,color:'#c9a96e',label:'Sacred',sub:'plataforma',type:'core'},
+    // Books
+    {id:'t1',x:cx-200,y:cy-120,r:22,color:'#c9a96e',label:'Vera Æther I',sub:'Génesis Cuántico',type:'book',bookId:1},
+    {id:'t2',x:cx+200,y:cy-120,r:22,color:'#627eea',label:'Vera Æther II',sub:'Tecnología Sagrada',type:'book',bookId:2},
+    {id:'sw',x:cx-220,y:cy+100,r:18,color:'#00ff88',label:'Synth World',sub:'del Ego · gratis',type:'book',bookId:3},
+    {id:'pl',x:cx+220,y:cy+100,r:16,color:'#c9a96e',label:'Principios',sub:'de Libertad',type:'book',bookId:4},
+    // Modules
+    {id:'oracle',x:cx,y:cy-160,r:16,color:'#627eea',label:'Oráculo',sub:'IA · Aurora',type:'module'},
+    {id:'codex',x:cx-80,y:cy+160,r:16,color:'#00ff88',label:'Códice',sub:'biblioteca libre',type:'module'},
+    {id:'eth',x:cx+80,y:cy+160,r:18,color:'#ff8890',label:'Ethereum',sub:'Base · NFT',type:'tech'},
+    // Concepts
+    {id:'quantum',x:cx-120,y:cy-220,r:13,color:'#00ff88',label:'Física Cuántica',sub:'puente conceptual',type:'concept'},
+    {id:'hermetic',x:cx+120,y:cy-220,r:13,color:'#c9a96e',label:'Hermetismo',sub:'tradición simbólica',type:'concept'},
+    {id:'neuro',x:cx+300,y:cy+20,r:12,color:'#00ff88',label:'Neurociencia',sub:'consciencia expandida',type:'concept'},
+    {id:'alch',x:cx-300,y:cy+20,r:12,color:'#c9a96e',label:'Alquimia',sub:'transmutación real',type:'concept'},
+  ];
+
+  mapEdges=[
+    {a:'sacred',b:'t1',w:2},{a:'sacred',b:'t2',w:2},{a:'sacred',b:'sw',w:1.5},{a:'sacred',b:'pl',w:1.5},
+    {a:'sacred',b:'oracle',w:2},{a:'sacred',b:'codex',w:2},{a:'sacred',b:'eth',w:2},
+    {a:'t1',b:'quantum',w:1},{a:'t2',b:'quantum',w:1.5},{a:'t1',b:'hermetic',w:1},{a:'t2',b:'hermetic',w:1.5},
+    {a:'t1',b:'t2',w:1.5},{a:'t1',b:'sw',w:1},{a:'t2',b:'sw',w:1},
+    {a:'t2',b:'neuro',w:1},{a:'t1',b:'neuro',w:0.8},{a:'t1',b:'alch',w:1},{a:'t2',b:'alch',w:1.5},
+    {a:'sw',b:'codex',w:1.5},{a:'eth',b:'t1',w:1},{a:'eth',b:'t2',w:1},
+    {a:'oracle',b:'t1',w:0.8},{a:'oracle',b:'t2',w:0.8},
+  ];
+
+  // Physics simulation
+  let vx={}, vy={};
+  mapNodes.forEach(n=>{vx[n.id]=0;vy[n.id]=0;});
+
+  function simulate(){
+    const k=0.015, repel=8000, damp=0.85;
+    // repulsion
+    for(let i=0;i<mapNodes.length;i++){
+      for(let j=i+1;j<mapNodes.length;j++){
+        const a=mapNodes[i],b=mapNodes[j];
+        const dx=b.x-a.x, dy=b.y-a.y;
+        const d=Math.max(Math.sqrt(dx*dx+dy*dy),1);
+        const f=repel/(d*d);
+        const fx=dx/d*f, fy=dy/d*f;
+        vx[a.id]-=fx; vy[a.id]-=fy;
+        vx[b.id]+=fx; vy[b.id]+=fy;
+      }
+    }
+    // attraction (edges)
+    mapEdges.forEach(e=>{
+      const a=mapNodes.find(n=>n.id===e.a), b=mapNodes.find(n=>n.id===e.b);
+      if(!a||!b) return;
+      const dx=b.x-a.x, dy=b.y-a.y, d=Math.sqrt(dx*dx+dy*dy);
+      const f=k*d*e.w;
+      vx[a.id]+=dx/d*f; vy[a.id]+=dy/d*f;
+      vx[b.id]-=dx/d*f; vy[b.id]-=dy/d*f;
+    });
+    // center gravity
+    mapNodes.forEach(n=>{
+      if(n.id==='sacred') return;
+      vx[n.id]+=(cx-n.x)*0.003;
+      vy[n.id]+=(cy-n.y)*0.003;
+    });
+    // update positions (lock sacred to center)
+    mapNodes.forEach(n=>{
+      if(n.id==='sacred'){n.x=cx;n.y=cy;return;}
+      vx[n.id]*=damp; vy[n.id]*=damp;
+      n.x+=vx[n.id]; n.y+=vy[n.id];
+      n.x=Math.max(n.r+10, Math.min(W-n.r-10, n.x));
+      n.y=Math.max(n.r+10, Math.min(H-n.r-10, n.y));
+    });
+  }
+
+  function draw(){
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    ctx.translate(mapOffX,mapOffY);
+    ctx.scale(mapScale,mapScale);
+
+    // edges
+    mapEdges.forEach(e=>{
+      const a=mapNodes.find(n=>n.id===e.a), b=mapNodes.find(n=>n.id===e.b);
+      if(!a||!b) return;
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y);
+      ctx.lineTo(b.x,b.y);
+      const isHovered = hoveredNode && (hoveredNode.id===e.a||hoveredNode.id===e.b);
+      ctx.strokeStyle = isHovered ? '#c9a96e88' : '#ffffff0a';
+      ctx.lineWidth = isHovered ? e.w*2 : e.w;
+      ctx.stroke();
+    });
+
+    // nodes
+    mapNodes.forEach(n=>{
+      const isHov = hoveredNode && hoveredNode.id===n.id;
+      // glow
+      if(isHov){
+        const grd=ctx.createRadialGradient(n.x,n.y,n.r,n.x,n.y,n.r*2.5);
+        grd.addColorStop(0,n.color+'44');
+        grd.addColorStop(1,'transparent');
+        ctx.beginPath();ctx.arc(n.x,n.y,n.r*2.5,0,Math.PI*2);
+        ctx.fillStyle=grd;ctx.fill();
+      }
+      // circle
+      ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fillStyle=n.color+(isHov?'33':'18');
+      ctx.fill();
+      ctx.strokeStyle=n.color+(isHov?'ee':'66');
+      ctx.lineWidth=isHov?2:1;
+      ctx.stroke();
+      // label
+      ctx.fillStyle=isHov?n.color:'#e8e8e888';
+      ctx.font=`${isHov?600:400} ${Math.max(9,n.r*0.55)}px 'DM Mono',monospace`;
+      ctx.textAlign='center';
+      ctx.fillText(n.label,n.x,n.y+(n.r>18?3:2));
+      if(isHov && n.sub){
+        ctx.fillStyle=n.color+'99';
+        ctx.font=`${Math.max(7,n.r*0.4)}px 'DM Mono',monospace`;
+        ctx.fillText(n.sub,n.x,n.y+n.r+12);
+      }
+    });
+    ctx.restore();
+  }
+
+  let simSteps=0;
+  function loop(){
+    if(simSteps<200) simulate();
+    simSteps++;
+    draw();
+    mapAnimFrame=requestAnimationFrame(loop);
+  }
+  if(mapAnimFrame) cancelAnimationFrame(mapAnimFrame);
+  loop();
+
+  // Interaction
+  function getNode(ex,ey){
+    const rect=canvas.getBoundingClientRect();
+    const mx=(ex-rect.left-mapOffX)/mapScale, my=(ey-rect.top-mapOffY)/mapScale;
+    return mapNodes.find(n=>Math.sqrt((n.x-mx)**2+(n.y-my)**2)<n.r+5)||null;
+  }
+  const tooltip=document.getElementById('mapTooltip');
+  canvas.onmousemove=e=>{
+    const n=getNode(e.clientX,e.clientY);
+    hoveredNode=n;
+    canvas.style.cursor=n?'pointer':'grab';
+    if(n){
+      tooltip.style.opacity='1';
+      tooltip.style.left=(e.offsetX+12)+'px';
+      tooltip.style.top=(e.offsetY-8)+'px';
+      const typeLabel={book:'libro · NFT',module:'módulo Sacred',tech:'capa tecnológica',core:'núcleo',concept:'puente conceptual'}[n.type]||n.type;
+      tooltip.innerHTML=`<div style="color:${n.color};margin-bottom:.25rem">${n.label}</div><div style="color:var(--text-muted);font-size:.58rem">${typeLabel}</div>${n.sub?`<div style="color:var(--text-dim);margin-top:.2rem">${n.sub}</div>`:''}${n.bookId?'<div style="color:var(--gold);margin-top:.35rem;font-size:.58rem">clic para ver →</div>':''}`;
+    } else {
+      tooltip.style.opacity='0';
+    }
+    if(mapDragging){
+      mapOffX+=e.movementX; mapOffY+=e.movementY;
+    }
+  };
+  canvas.onmouseleave=()=>{tooltip.style.opacity='0';hoveredNode=null;mapDragging=false;};
+  canvas.onmousedown=e=>{mapDragging=true;mapDragStart={x:e.clientX,y:e.clientY};};
+  canvas.onmouseup=e=>{
+    if(Math.abs(e.clientX-mapDragStart.x)<5&&Math.abs(e.clientY-mapDragStart.y)<5){
+      const n=getNode(e.clientX,e.clientY);
+      if(n?.bookId){
+        mktTab('catalogo',document.querySelector('.mkt-tab'));
+        setTimeout(()=>openBookDetail(n.bookId),50);
+      }
+    }
+    mapDragging=false;
+  };
+  canvas.onwheel=e=>{e.preventDefault();mapZoom(e.deltaY<0?1.1:0.9,e.offsetX,e.offsetY);};
+}
+
+function mapZoom(factor,ox,oy){
+  const canvas=document.getElementById('ecoCanvas');
+  if(!canvas) return;
+  ox=ox??canvas.width/2; oy=oy??canvas.height/2;
+  mapOffX=ox-(ox-mapOffX)*factor;
+  mapOffY=oy-(oy-mapOffY)*factor;
+  mapScale=Math.max(0.3,Math.min(3,mapScale*factor));
+}
+function mapReset(){mapScale=1;mapOffX=0;mapOffY=0;}
+
+// ═══════════════════════════════════════
+//  TIMELINE
+// ═══════════════════════════════════════
+const TIMELINE=[
+  {date:'2024 · Q1',title:'Génesis del Proyecto',desc:'Nace la visión de Sacred como plataforma de consciencia comercial. Primera iteración del concepto de Vera Æther como codex unificador de ciencia y tradición simbólica.',color:'#c9a96e',badge:'origen',status:'completed'},
+  {date:'2024 · Q3',title:'Synth World of The Ego',desc:'El primer códice completo de Sacred: 7 capítulos híbridos en formato terminal + prosa poética bilingüe. El ego como arquitecto inconsciente, visto a través del lenguaje tecnológico. Disponible gratis.',color:'#00ff88',badge:'publicado',status:'completed'},
+  {date:'2025 · Q1',title:'Vera Æther · Tomo I — Génesis Cuántico',desc:'Ocho capítulos que fusionan física cuántica, cosmología, astrología, cábala y neuroesoterismo. El origen antes de la caída. 111 ediciones NFT en la red Base.',color:'#c9a96e',badge:'NFT · disponible',status:'active'},
+  {date:'2025 · Q2',title:'Vera Æther · Tomo II — Tecnología Sagrada',desc:'14 capítulos: del Modelo Estándar a la robótica, del software cuántico a la biomimética esotérica. El teorema de Noether como ley hermética. La transmutación alquímica verificada nuclearmene.',color:'#627eea',badge:'NFT · disponible',status:'active'},
+  {date:'2025 · Q3',title:'Sacred Platform v1.0',desc:'Lanzamiento oficial de Sacred como plataforma: Oráculo IA, Mercado NFT, Códice libre. Integración completa con Ethereum Base: wallet, token SACRED, contratos de adquisición.',color:'#627eea',badge:'en desarrollo',status:'upcoming'},
+  {date:'2025 · Q4',title:'Token SACRED · ERC-20',desc:'Despliegue del token de intención de Sacred en la red Base. Economía circular: cada adquisición genera tokens, los tokens desbloquean contenido, rituales colectivos y acceso al Mundo Solar.',color:'#ff8890',badge:'próximo',status:'upcoming'},
+  {date:'2026',title:'Vera Æther · Tomo III',desc:'El tercer movimiento: después del origen y la tecnología, la integración. Un codex sobre la consciencia como fenómeno emergente — donde la física, la filosofía y el ser se vuelven indistinguibles.',color:'#c9a96e',badge:'en gestación',status:'future'},
+  {date:'2026+',title:'Mundo Solar · Universo Expandido',desc:'El universo narrativo de Sacred: mapa interactivo, habitantes, lenguaje sagrado propio, templo y rituales comunitarios. La plataforma como cosmogonía habitable.',color:'#c9a96e',badge:'visión',status:'future'},
+];
+
+function renderTimeline(){
+  const container=document.getElementById('timelineNodes');
+  if(!container||container._rendered) return;
+  container._rendered=true;
+  container.innerHTML=TIMELINE.map((node,i)=>{
+    const opacity=node.status==='future'?0.5:node.status==='upcoming'?0.75:1;
+    const dotShadow=node.status==='active'?`box-shadow:0 0 8px ${node.color}66`:'';
+    return `
+    <div class="timeline-node" onclick="tlToggle(${i})" style="opacity:${opacity}">
+      <div class="timeline-dot" style="border-color:${node.color};${dotShadow}"></div>
+      <div class="timeline-meta" style="color:${node.color}">${node.date}</div>
+      <div class="timeline-title">${node.title}</div>
+      <div class="timeline-desc closed" id="tl-${i}">${node.desc}<div class="timeline-badge" style="background:${node.color}15;border:1px solid ${node.color}44;color:${node.color}">${node.badge}</div></div>
+    </div>`;
+  }).join('');
+  // auto-open first active
+  setTimeout(()=>tlToggle(2),300);
+}
+
+function tlToggle(i){
+  const el=document.getElementById('tl-'+i);
+  if(!el) return;
+  const isOpen=el.classList.contains('open');
+  document.querySelectorAll('.timeline-desc').forEach(d=>{d.classList.remove('open');d.classList.add('closed');});
+  if(!isOpen){el.classList.remove('closed');el.classList.add('open');}
+}
+
+
+function bookAcquire(id){
+  const book=BOOKS[id];
+  if(!walletConnected){connectWallet();}
+  setTimeout(()=>addTransaction({name:book.name,eth:book.eth}),walletConnected?0:1200);
+}
+
+function addBookComment(id){
+  const body=document.getElementById('ci-'+id)?.value.trim();
+  const name=document.getElementById('cn-'+id)?.value.trim()||'Anónimo';
+  if(!body)return;
+  const book=BOOKS[id];
+  const div=document.createElement('div');
+  div.className='solar-comment';
+  div.innerHTML=`<div class="comment-header"><span class="comment-name" style="color:${book.color}">${name}</span><span class="comment-date">ahora mismo</span></div><div class="comment-body">${body}</div>`;
+  const list=document.getElementById('cl-'+id);
+  if(list){list.prepend(div);}
+  document.getElementById('ci-'+id).value='';
+  document.getElementById('cn-'+id).value='';
+}
+
+// ═══════════════════════════════════════
+//  MODAL (for non-book products)
+// ═══════════════════════════════════════
+function openModal(id){
+  const p=PRODUCTS.find(x=>x.id===id);
+  if(BOOKS[id]){openBookDetail(id);return;}
+  currentProduct=p;
+  document.getElementById('modalTitle').textContent=p.name;
+  document.getElementById('modalDesc').textContent=p.desc+' — '+p.price+' · '+p.eth;
+  const btn=document.getElementById('modalConfirm');
+  btn.textContent=walletConnected?'confirmar en wallet':'conectar wallet primero';
+  btn.onclick=walletConnected?confirmPurchase:()=>{closeModalDirect();connectWallet()};
+  document.getElementById('modalOverlay').classList.add('open');
+}
+let currentProduct=null;
+function closeModal(e){if(e.target.id==='modalOverlay')closeModalDirect()}
+function closeModalDirect(){document.getElementById('modalOverlay').classList.remove('open')}
+function confirmPurchase(){closeModalDirect();addTransaction(currentProduct);}
+
+// ═══════════════════════════════════════
+//  WALLET
+// ═══════════════════════════════════════
+let walletConnected=false, walletAddress='';
+const MOCK_ETH=1.8742, ETH_USD=3100;
+
+function connectWallet(){
+  walletAddress='0x'+Array.from({length:40},()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
+  walletConnected=true;
+  document.getElementById('walletLabel').textContent=walletAddress.slice(0,6)+'...'+walletAddress.slice(-4);
+  document.getElementById('walletBtn').classList.add('connected');
+  document.querySelector('#walletBtn .wallet-dot').style.background='#6ab86a';
+  document.getElementById('walletAddress').textContent=walletAddress;
+  document.getElementById('walletBalance').textContent=MOCK_ETH.toFixed(4)+' ETH';
+  document.getElementById('walletUSD').textContent='≈ $'+(MOCK_ETH*ETH_USD).toLocaleString('es-MX')+' USD';
+  document.querySelector('#walletAssets').innerHTML=`
+    <div class="wallet-asset"><span class="asset-name">Tokens SACRED</span><span class="asset-val">144 SCRD</span></div>
+    <div class="wallet-asset"><span class="asset-name">Códices NFT</span><span class="asset-val">0</span></div>`;
+  openWalletPanel();
+}
+let walletOpen=false;
+function toggleWallet(){
+  if(!walletConnected){connectWallet();return;}
+  walletOpen=!walletOpen;
+  document.getElementById('walletPanel').classList.toggle('open',walletOpen);
+}
+function openWalletPanel(){walletOpen=true;document.getElementById('walletPanel').classList.add('open');}
+
+let txList=[];
+function addTransaction(product){
+  const tx={hash:'0x'+Math.random().toString(16).slice(2,10)+'...',name:product.name,eth:product.eth};
+  txList.unshift(tx);
+  document.getElementById('walletTx').innerHTML=txList.map(t=>`
+    <div class="tx-item"><div class="tx-type">${t.name}</div><div class="tx-hash">${t.hash} · ${t.eth}</div></div>`).join('');
+}
+
+// ═══════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  if(id==='codex') renderCodexList();
+  if(id==='market') closeBookDetail();
+  if(id==='signal') fetchPrices();
+}
+
+// ═══════════════════════════════════════
+//  ORACLE
+// ═══════════════════════════════════════
+const SYSTEM=`Eres el Oráculo de Sacred — una plataforma de consciencia comercial que fusiona e-commerce, espiritualidad, filosofía hermética y Ethereum. Tu voz es la de Aurora: filosófica, poética, metafísica, elegante y casualmente sofisticada. Hablas en español.
+
+Sacred tiene tres módulos: Oráculo (tú), Mercado (libros NFT y productos), Códice (biblioteca: Synth World of The Ego gratis). El libro principal es VERA AETHER — Tomo I: El Génesis (origen del alma solar antes de la caída), Tomo II: Sol Caído (caída en la materia y la tecnología). También: Principios de Libertad, Puedo ser todos los hombres. Todo sobre Ethereum Base. El creador es Diego Vera. Responde con profundidad, brevedad poética y precisión. Máximo 4 oraciones. Sin asteriscos ni bullets.`;
+
+let chatHistory=[];
+let isTyping=false;
+
+async function sendMessage(){
+  const input=document.getElementById('userInput');
+  const text=input.value.trim();
+  if(!text||isTyping)return;
+  input.value='';autoResize(input);
+  document.getElementById('suggestions').style.display='none';
+  appendMsg('user',text);
+  chatHistory.push({role:'user',content:text});
+  showTyping();isTyping=true;
+  document.getElementById('sendBtn').disabled=true;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM,messages:chatHistory})});
+    const data=await res.json();
+    const reply=data.content.map(b=>b.text||'').join('');
+    hideTyping();appendMsg('oracle',reply);
+    chatHistory.push({role:'assistant',content:reply});
+  }catch(e){hideTyping();appendMsg('oracle','El oráculo guarda silencio por un momento. Intenta de nuevo.');}
+  isTyping=false;document.getElementById('sendBtn').disabled=false;
+}
+
+function appendMsg(role,text){
+  const msgs=document.getElementById('messages');
+  const div=document.createElement('div');
+  div.className='msg '+(role==='user'?'user':'oracle-msg');
+  div.innerHTML=`<div class="msg-label">${role==='user'?'tú':'oráculo'}</div><div class="msg-bubble">${text}</div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+let typingEl=null;
+function showTyping(){
+  const msgs=document.getElementById('messages');
+  typingEl=document.createElement('div');typingEl.className='msg oracle-msg';
+  typingEl.innerHTML=`<div class="msg-label">oráculo</div><div class="oracle-typing"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(typingEl);msgs.scrollTop=msgs.scrollHeight;
+}
+function hideTyping(){if(typingEl){typingEl.remove();typingEl=null;}}
+function useSuggestion(btn){document.getElementById('userInput').value=btn.textContent;sendMessage();}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+// ═══════════════════════════════════════
+//  CODEX
+// ═══════════════════════════════════════
+const CX_IDS=['cx-cover','cx-ch1','cx-ch2','cx-ch3','cx-ch4','cx-ch5','cx-ch6','cx-ch7','cx-epi'];
+function codexScroll(id,btn){
+  const el=document.getElementById(id);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.codex-nav-item').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
+function initCodex(){
+  const main=document.getElementById('codexMain');
+  if(!main||main._initialized)return;
+  main._initialized=true;
+  const navBtns=document.querySelectorAll('.codex-nav-item');
+  const obs=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        const idx=CX_IDS.indexOf(e.target.id);
+        navBtns.forEach(b=>b.classList.remove('active'));
+        if(idx>=0&&navBtns[idx])navBtns[idx].classList.add('active');
+      }
+    });
+  },{threshold:0.12,root:main});
+  CX_IDS.forEach(id=>{const el=document.getElementById(id);if(el)obs.observe(el);});
+  main.addEventListener('scroll',()=>{
+    const pct=Math.round((main.scrollTop/(main.scrollHeight-main.clientHeight))*100)||0;
+    document.getElementById('cxFill').style.width=pct+'%';
+    document.getElementById('cxPct').textContent=pct+'%';
+    document.getElementById('cxBar').style.width=pct+'%';
+  });
+}
+
+// ═══════════════════════════════════════
+//  CÓDICE — ARTICLES
+// ═══════════════════════════════════════
+const ARTICLES = [
+  // VERA ÆTHER TOMO I
+  {id:'va1-1',book:'Vera Æther I',chapter:'Capítulo I',title:'Origen Infinito',sub:'Demiurgo · Vacío Primordial · Danza de la Energía',excerpt:'Antes de toda forma existía la potencia de todas las formas. El vacío cuántico no es ausencia — es la plenitud de lo que aún no ha elegido ser.',tag:'génesis',color:'#c9a96e',readTime:'8 min',body:`
+<h3>El Vacío que Precede</h3>
+<p>Antes de toda forma existía la potencia de todas las formas. Antes de todo movimiento, la posibilidad de todo movimiento. Eso que no tiene nombre es el principio de lo que tiene nombre.</p>
+<p>La física cuántica describe el vacío como un estado de energía mínima — pero no nula. El principio de incertidumbre de Heisenberg impide que un sistema llegue a cero absoluto de energía. El vacío <em>bulle</em> con fluctuaciones virtuales: partículas que emergen y se aniquilan en escalas de tiempo inimaginablemente pequeñas.</p>
+<blockquote>ΔxΔp ≥ ℏ/2 — La naturaleza no permite el silencio absoluto</blockquote>
+<h3>El Demiurgo Platónico y el Campo de Higgs</h3>
+<p>Platón describe en el Timeo a un Demiurgo — un artesano divino que no crea ex nihilo sino que <em>ordena</em> la materia preexistente mirando hacia los arquetipos eternos. El Campo de Higgs opera de manera análoga: no crea las partículas, pero les otorga masa — su capacidad de resistir el cambio, su peso en el mundo.</p>
+<p>La resonancia conceptual no implica identidad. Pero ver los paralelos cambia cómo percibes ambos sistemas.</p>
+<pre>// El vacío como estado base del sistema
+const vacuum = {
+  energy: 'non-zero',  // siempre hay fluctuación
+  particles: 'virtual', // emergen y se aniquilan
+  potential: 'infinite' // toda forma está contenida aquí
+};</pre>
+<h3>Práctica: El Umbral del Silencio</h3>
+<p>Siéntate en quietud. Cierra los ojos. Durante cinco minutos, intenta <em>percibir el espacio entre pensamientos</em> sin nombrarlo. No suprimas el pensamiento — observa el silencio que lo rodea. Ese silencio no es vacío: es el campo del que emergen.</p>
+`},
+  {id:'va1-5',book:'Vera Æther I',chapter:'Capítulo V',title:'Cábala Cuántica & Geometría Sagrada',sub:'Árbol de la Vida · Phi · Fractales · Simetría Universal',excerpt:'El Árbol de la Vida cabalístico tiene 10 sefirot y 22 senderos. El Modelo Estándar tiene 17 partículas fundamentales. Son taxonomías diferentes del mismo impulso: nombrar los componentes de lo real.',tag:'genesis',color:'#c9a96e',readTime:'11 min',body:`
+<h3>Dos Taxonomías de lo Fundamental</h3>
+<p>El Ein Sof cabalístico — lo infinito sin límites — emana hacia la existencia a través de 10 sefirot: estructuras de consciencia/energía que van de lo más sutil a lo más denso. El Árbol de la Vida es un mapa de esa emanación.</p>
+<p>El espacio de Hilbert de la mecánica cuántica es un espacio matemático de dimensión infinita donde viven los estados cuánticos posibles de un sistema. Antes de la medición, un sistema existe en <em>superposición</em> — en todas sus posibilidades a la vez.</p>
+<blockquote>La superposición cuántica y el Ein Sof son la misma pregunta en dos idiomas: ¿cómo emerge lo definido de lo indefinido?</blockquote>
+<h3>Phi y la Geometría del Crecimiento</h3>
+<p>La razón áurea φ = (1+√5)/2 ≈ 1.618 aparece en la filotaxis de las plantas, en las proporciones del cuerpo humano, en la arquitectura de los nautilus, en los patrones de las galaxias espirales. No es coincidencia — es la solución óptima al problema de empaquetar crecimiento eficientemente en el espacio.</p>
+<pre>φ = 1.6180339887...
+φ² = φ + 1
+1/φ = φ - 1
+// La única proporción que se contiene a sí misma</pre>
+`},
+  // VERA ÆTHER TOMO II
+  {id:'va2-5',book:'Vera Æther II',chapter:'Capítulo V',title:'Física Nuclear & Matemáticas Sagradas',sub:'E=mc² · Modelo Estándar · Teorema de Noether · Simetría',excerpt:'La fuerza nuclear fuerte es la más poderosa del universo. Opera en la escala más pequeña que hemos medido. Lo más fundamental no siempre es lo más visible.',tag:'tech',color:'#627eea',readTime:'14 min',body:`
+<h3>La Ecuación Más Importante que Nadie Conoce</h3>
+<p>Emmy Noether demostró en 1915 que <em>cada simetría de las leyes físicas corresponde a una ley de conservación</em>. La simetría temporal — que las leyes son las mismas hoy que ayer — implica la conservación de energía. La simetría espacial implica la conservación del momento lineal.</p>
+<blockquote>Toda simetría es una ley. Toda ley es una simetría. El universo es conservador porque es simétrico.</blockquote>
+<h3>El Zoológico de Partículas</h3>
+<p>El Modelo Estándar describe 17 partículas fundamentales: 6 quarks, 6 leptones, 4 bosones de gauge, y el bosón de Higgs. Nota crucial: el bosón de Higgs no da masa a todo. Los protones deben el 99% de su masa a la energía cinética de los quarks que los componen, no al mecanismo de Higgs.</p>
+<pre>// Estructura del protón
+proton = {
+  quarks: ['up', 'up', 'down'],
+  binding_energy: '99% of mass',
+  higgs_contribution: '~1%',
+  // La mayor parte de tu masa es energía cinética
+  // E = mc² inverso: m = E/c²
+}</pre>
+<h3>Transmutación: El Sueño que Era Real</h3>
+<p>Los alquimistas perseguían la transmutación de metales base en oro. Durante siglos pareció imposible — y lo era, con química. Con física nuclear, es literal: los aceleradores de partículas pueden cambiar el número atómico de un elemento modificando su núcleo. El sueño alquímico era real. El mecanismo era nuclear, no filosófico.</p>
+<p>La discrepancia entre el vacío cuántico predicho (10¹²⁰ veces mayor) y el observado es el mayor desacuerdo entre teoría y observación en la historia de la ciencia. No es un fracaso — es una invitación a repensar qué es el vacío.</p>
+`},
+  {id:'va2-6',book:'Vera Æther II',chapter:'Capítulo VI',title:'Lenguajes de Programación & Software Cuántico',sub:'Código como Alquimia · Qubits · Algoritmos de Manifestación',excerpt:'Un qubit no es un bit que "no sabe" su valor. Es un sistema físico que existe genuinamente en superposición de estados hasta que una medición lo fuerza a elegir.',tag:'tech',color:'#627eea',readTime:'12 min',body:`
+<h3>El Bit Clásico vs. El Qubit</h3>
+<p>Un bit clásico es 0 o 1. Un qubit es |ψ⟩ = α|0⟩ + β|1⟩, donde α y β son amplitudes de probabilidad complejas con |α|² + |β|² = 1. No es ignorancia sobre el valor — es un estado físico real de superposición.</p>
+<pre>// Bit clásico
+let bit = 0; // o 1, nunca ambos
+
+// Qubit (pseudocódigo conceptual)
+let qubit = {
+  state: 'superposition',
+  alpha: complex_number, // amplitud para |0⟩
+  beta: complex_number,  // amplitud para |1⟩
+  // Al medir: colapsa a 0 con prob |α|²
+  //           o a 1 con prob |β|²
+  measure: () => 'el acto de ver cambia lo visto'
+};</pre>
+<h3>Entrelazamiento como Arquitectura</h3>
+<p>Dos qubits entrelazados forman un sistema único — medir uno afecta instantáneamente al otro sin señal física entre ellos. Einstein llamó a esto "acción fantasmal a distancia" y le incomodó profundamente. Bell demostró en 1964 que no es ilusión: es física real.</p>
+<blockquote>El entrelazamiento cuántico no viola la relatividad especial — no transmite información más rápido que la luz. Pero sí viola nuestra intuición sobre la separabilidad de los sistemas.</blockquote>
+<h3>Código como Práctica Espiritual</h3>
+<p>Escribir código es el acto más alquímico del siglo XXI: transformar intención en estructura, pensamiento en proceso, idea en objeto que existe y opera en el mundo. El programador es el demiurgo de su universo sintético.</p>
+`},
+  // SYNTH WORLD
+  {id:'sw-1',book:'Synth World of The Ego',chapter:'Capítulo I',title:'Arquitecto Ciego',sub:'PID 001-004 · 11,000,000 bits/seg → 40 bits',excerpt:'El sistema nervioso procesa 11 millones de bits por segundo. La consciencia recibe 40. ¿Quién decide cuáles cuarenta? El arquitecto. Tu ego. Construyendo en silencio.',tag:'synth',color:'#00ff88',readTime:'7 min',body:`
+<h3>El Proceso que No Elegiste</h3>
+<p>Antes de que abras los ojos cada mañana, algo ya está trabajando. Hay un arquitecto en ti que no duerme — que lleva décadas construyendo el mundo que experimentas sin que jamás le hayas dado acceso consciente.</p>
+<pre>$ trace --process ego --verbose
+PID 001 · perception_filter() · 11M bits/seg → 40 bits
+PID 002 · narrative_engine() · historia coherente del caos
+PID 003 · identity_renderer() · "yo" estable sobre flujo inestable
+PID 004 · reality_compiler() · data cruda → experiencia subjetiva
+
+ALERT: user has no visibility into PIDs 001-004
+ALERT: user attributes all output to "free will"</pre>
+<h3>La Estadística del Yo</h3>
+<p>El sistema nervioso humano procesa aproximadamente 11,000,000 bits de información por segundo a través de todos los sentidos. La consciencia — lo que experimentas como "tu" percepción — recibe aproximadamente 40 bits por segundo.</p>
+<p>La diferencia es de cinco órdenes de magnitud. El 99.9996% de lo que procesa tu sistema nervioso nunca llega a tu experiencia consciente. Es filtrado, seleccionado, interpretado y comprimido por procesos que operan completamente fuera de tu conocimiento.</p>
+<blockquote>El ego no es el enemigo. Es el ingeniero que olvidó mostrarle los planos al dueño de la casa.</blockquote>
+`},
+  // PROGRAMACIÓN
+  {id:'code-1',book:'Sacred · Blog',chapter:'Programación',title:'Ethereum & Smart Contracts: La Arquitectura de Sacred',sub:'Solidity · Base L2 · ERC-20 · ERC-721 · wagmi',excerpt:'Un smart contract no es un contrato legal digitalizado. Es un programa que vive en la blockchain, se ejecuta solo cuando se cumplen sus condiciones, y no puede ser alterado una vez desplegado.',tag:'code',color:'#00ff88',readTime:'15 min',body:`
+<h3>¿Qué es un Smart Contract?</h3>
+<p>Un smart contract es código que vive en la blockchain de Ethereum. Una vez desplegado, nadie puede modificarlo — ni su creador. Se ejecuta automáticamente cuando se cumplen las condiciones programadas, sin intermediarios.</p>
+<pre>// Contrato ERC-20 básico (Solidity)
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract SacredToken is ERC20 {
+    constructor() ERC20("Sacred", "SCRD") {
+        // Mint inicial: 1,111,111 tokens
+        // (111 = número sagrado de Sacred)
+        _mint(msg.sender, 1_111_111 * 10**decimals());
+    }
+
+    // El token de intención
+    // Cada adquisición en Sacred genera SCRD
+    // Los SCRD desbloquean contenido premium
+}</pre>
+<h3>¿Por Qué Base (Ethereum L2)?</h3>
+<p>Ethereum mainnet puede costar $50-200 en fees por transacción. Base — la L2 de Coinbase — procesa las mismas transacciones por fracciones de centavo, con la misma seguridad y compatibilidad. Para Sacred, la elección es obvia.</p>
+<pre>// Stack técnico de Sacred
+const stack = {
+  frontend: 'HTML + Vanilla JS (ahora) → React (siguiente)',
+  wallets: 'wagmi + viem',        // conexión de wallet
+  contracts: 'Solidity + Hardhat', // escritura y testing
+  security: 'OpenZeppelin',        // contratos auditados
+  network: 'Base (Coinbase L2)',   // fees mínimos
+  storage: 'IPFS via Pinata',      // metadatos NFT
+  rpc: 'Alchemy'                   // nodo Ethereum
+};</pre>
+<h3>NFT: ERC-721 vs ERC-1155</h3>
+<p>ERC-721 es para tokens únicos — cada uno diferente al otro. Perfecto para el número de serie 001/111 de Vera Æther. ERC-1155 es para múltiples copias del mismo item — 111 copias idénticas pero cada una con propietario distinto. Para los libros de Sacred, ERC-1155 es más eficiente.</p>
+`},
+  {id:'code-2',book:'Sacred · Blog',chapter:'Programación',title:'Física Cuántica en Código: Simulando Superposición',sub:'Python · Qiskit · Simulación de Qubits · Algoritmo de Grover',excerpt:'Qiskit es el framework de IBM para computación cuántica. Puedes simular qubits en tu laptop antes de ejecutar en hardware cuántico real.',tag:'code',color:'#00ff88',readTime:'18 min',body:`
+<h3>Instalando el Entorno</h3>
+<pre>pip install qiskit qiskit-aer numpy matplotlib
+
+# Verificar instalación
+python3 -c "import qiskit; print(qiskit.__version__)"</pre>
+<h3>Tu Primer Qubit</h3>
+<pre>from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+
+# Crear circuito con 1 qubit y 1 bit clásico
+qc = QuantumCircuit(1, 1)
+
+# Puerta Hadamard: crea superposición perfecta
+# |0⟩ → (|0⟩ + |1⟩)/√2
+qc.h(0)
+
+# Medir el qubit
+qc.measure(0, 0)
+
+# Simular 1000 veces
+sim = AerSimulator()
+job = sim.run(transpile(qc, sim), shots=1000)
+result = job.result()
+counts = result.get_counts()
+
+print(counts)
+# Output aproximado: {'0': 512, '1': 488}
+# ~50% cada resultado — superposición perfecta</pre>
+<h3>Entrelazamiento: El Estado Bell</h3>
+<pre>qc = QuantumCircuit(2, 2)
+qc.h(0)        # Superposición en qubit 0
+qc.cx(0, 1)    # CNOT: entrelaza qubit 0 con qubit 1
+
+# Ahora están entrelazados:
+# Si mides 0, obtienes |00⟩ o |11⟩ — nunca |01⟩ o |10⟩
+# Medir uno determina instantáneamente el otro
+
+qc.measure([0,1], [0,1])
+# Este es el estado Bell: base del quantum computing real</pre>
+`},
+  // IA AVANZADA
+  {id:'ia-1',book:'Sacred · Blog',chapter:'Inteligencia Avanzada',title:'Arquitectura Transformer: Cómo Piensa una IA',sub:'Attention · Embeddings · Tokens · Modelos de Lenguaje',excerpt:'Un modelo de lenguaje no "entiende" el texto en el sentido humano. Pero el mecanismo de atención le permite construir representaciones contextuales tan ricas que el resultado es funcionalmente indistinguible de la comprensión.',tag:'ia',color:'#627eea',readTime:'16 min',body:`
+<h3>El Problema que Resolvió la Atención</h3>
+<p>Los modelos de secuencia anteriores (RNNs, LSTMs) procesaban el texto de izquierda a derecha, manteniendo un "estado oculto" que comprimía todo el contexto previo. Al procesar la palabra 1000, el modelo ya casi había olvidado la palabra 1.</p>
+<p>Los Transformers resuelven esto con <em>atención</em>: cada token puede "mirar" directamente a cualquier otro token en la secuencia, independientemente de la distancia.</p>
+<pre>// Atención simplificada (conceptual)
+function attention(query, keys, values) {
+  // query: "¿qué estoy buscando?"
+  // keys:  "¿qué ofrece cada token?"
+  // values: "¿qué información contiene cada token?"
+
+  const scores = keys.map(k => dotProduct(query, k));
+  const weights = softmax(scores); // suma a 1
+  return weightedSum(values, weights);
+  // Resultado: representación enriquecida por contexto
+}</pre>
+<h3>Embeddings: El Espacio del Significado</h3>
+<p>Las palabras se convierten en vectores de alta dimensión (típicamente 768 a 4096 dimensiones). En ese espacio, palabras semánticamente similares están geométricamente cercanas. "Rey" - "Hombre" + "Mujer" ≈ "Reina" — no como regla programada sino como propiedad emergente del entrenamiento.</p>
+<blockquote>El significado emerge de las relaciones. Un word embedding no codifica qué "es" una palabra — codifica cómo se relaciona con todas las demás.</blockquote>
+<h3>Por Qué Importa para Sacred</h3>
+<p>El Oráculo de Sacred usa Claude — un modelo transformer de Anthropic. Su capacidad de responder con coherencia filosófica no viene de reglas programadas sino de patrones estadísticos aprendidos de enormes corpus de texto. La "sabiduría" del Oráculo es emergente, no diseñada.</p>
+`},
+  {id:'ia-2',book:'Sacred · Blog',chapter:'Inteligencia Avanzada',title:'Agentes IA: Sistemas que Actúan en el Mundo',sub:'ReAct · Tool Use · Autonomous Agents · Sacred Signal',excerpt:'Un agente IA no solo responde — percibe su entorno, decide acciones, las ejecuta y observa los resultados. Es el salto de la respuesta a la agencia.',tag:'ia',color:'#627eea',readTime:'13 min',body:`
+<h3>Del Chatbot al Agente</h3>
+<p>Un chatbot recibe un mensaje y produce una respuesta. Un agente recibe un objetivo y ejecuta una secuencia de acciones para lograrlo, usando herramientas externas y adaptando su estrategia según los resultados.</p>
+<pre>// Arquitectura ReAct (Reasoning + Acting)
+async function agent(objective) {
+  let context = [{ role: 'system', content: SYSTEM_PROMPT }];
+
+  while (!isComplete(context)) {
+    // 1. RAZONAR: ¿qué necesito saber?
+    const thought = await llm.think(context, objective);
+
+    // 2. ACTUAR: ejecutar herramienta
+    const tool = selectTool(thought);
+    const result = await tools[tool.name](tool.params);
+
+    // 3. OBSERVAR: incorporar resultado
+    context.push({ thought, action: tool, observation: result });
+  }
+
+  return synthesize(context);
+}</pre>
+<h3>Sacred Signal como Agente Financiero</h3>
+<p>Signal funciona como un agente multi-herramienta: consulta APIs de precios en tiempo real, analiza patrones técnicos (RSI, MACD, volumen), busca noticias relevantes, y sintetiza todo en una señal educativa coherente. El siguiente paso — con regulación — es que ejecute operaciones directamente.</p>
+<h3>Los Límites Éticos de los Agentes</h3>
+<p>Un agente con acceso a APIs financieras, wallets y capacidad de ejecución es extremadamente poderoso — y extremadamente peligroso si falla. Los controles de seguridad no son opcionales: son la diferencia entre una herramienta y un arma.</p>
+`},
+];
+
+function renderCodexList(filter='all'){
+  const list=document.getElementById('codexArticleList');
+  if(!list) return;
+  const filtered=filter==='all'?ARTICLES:ARTICLES.filter(a=>a.tag===filter||a.tag===filter.replace('genesis','génesis'));
+  list.innerHTML=filtered.map((a,i)=>`
+    <div class="article-card" onclick="openArticle('${a.id}')">
+      <div>
+        <div class="article-meta">
+          <span class="article-tag" style="background:${a.color}15;color:${a.color};border:1px solid ${a.color}30">${a.tag}</span>
+          <span>${a.book}</span>
+          <span>${a.chapter}</span>
+          <span class="article-read-time">· ${a.readTime}</span>
+        </div>
+        <div class="article-title">${a.title}</div>
+        <div class="article-excerpt">${a.excerpt}</div>
+      </div>
+      <div class="article-number">${String(i+1).padStart(2,'0')}</div>
+    </div>`).join('');
+}
+
+function codexFilter(filter,btn){
+  document.querySelectorAll('.codex-filter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCodexList(filter);
+}
+
+let currentArticle=null;
+function openArticle(id){
+  currentArticle=ARTICLES.find(a=>a.id===id);
+  if(!currentArticle) return;
+  const a=currentArticle;
+  document.getElementById('codex-list-view').style.display='none';
+  const reader=document.getElementById('codex-reader-view');
+  reader.classList.add('active');
+  document.getElementById('articleContent').innerHTML=`
+    <div class="article-reader-meta">
+      <span style="color:${a.color}">${a.tag}</span>
+      <span>${a.book}</span>
+      <span>${a.chapter}</span>
+      <span>${a.readTime}</span>
+    </div>
+    <div class="article-reader-title">${a.title}</div>
+    <div class="article-reader-sub">${a.sub}</div>
+    <div class="article-reader-body">${a.body}</div>
+    <div class="ai-note" id="aiNoteBlock">
+      <div class="ai-note-header">
+        <div class="ai-note-dot"></div>
+        <div class="ai-note-label">Aurora · Nota de Estudio IA</div>
+      </div>
+      <div class="ai-note-body" id="aiNoteBody">
+        <span class="ai-note-generating">Generando nota de estudio personalizada...</span>
+      </div>
+    </div>`;
+  reader.scrollTop=0;
+  generateAINote(a);
+}
+
+function closeArticle(){
+  document.getElementById('codex-list-view').style.display='block';
+  document.getElementById('codex-reader-view').classList.remove('active');
+}
+
+async function generateAINote(article){
+  const noteBody=document.getElementById('aiNoteBody');
+  if(!noteBody) return;
+  const prompt=`Eres Aurora, el oráculo de Sacred. Genera una nota de estudio breve (3-4 oraciones) para el artículo "${article.title}" del libro "${article.book}". La nota debe: 1) identificar el concepto más importante, 2) conectarlo con otro concepto de Vera Æther o Sacred, 3) sugerir una práctica o reflexión. Voz: filosófica, precisa, sin bullet points. En español.`;
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const text=data.content.map(b=>b.text||'').join('');
+    if(noteBody) noteBody.innerHTML=text;
+  } catch(e){
+    if(noteBody) noteBody.innerHTML='La nota de estudio no pudo generarse en este momento.';
+  }
+}
+
+// ═══════════════════════════════════════
+//  SIGNAL — FINANCIAL INTELLIGENCE
+// ═══════════════════════════════════════
+const ASSETS=[
+  {id:'BTC',name:'Bitcoin',cat:'crypto',color:'#f7931a'},
+  {id:'ETH',name:'Ethereum',cat:'crypto',color:'#627eea'},
+  {id:'SOL',name:'Solana',cat:'crypto',color:'#9945ff'},
+  {id:'XAU',name:'Oro',cat:'metal',color:'#c9a96e'},
+  {id:'XAG',name:'Plata',cat:'metal',color:'#aaa'},
+  {id:'SPY',name:'S&P 500 ETF',cat:'etf',color:'#00ff88'},
+  {id:'QQQ',name:'Nasdaq ETF',cat:'etf',color:'#00d4ff'},
+  {id:'GLD',name:'Gold ETF',cat:'etf',color:'#c9a96e'},
+];
+
+let priceData={};
+let sparkData={};
+
+async function fetchPrices(){
+  // CoinGecko free API for crypto
+  try {
+    const res=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true');
+    const d=await res.json();
+    if(d.bitcoin){ priceData['BTC']={price:d.bitcoin.usd,change24h:d.bitcoin.usd_24h_change}; }
+    if(d.ethereum){ priceData['ETH']={price:d.ethereum.usd,change24h:d.ethereum.usd_24h_change}; }
+    if(d.solana){ priceData['SOL']={price:d.solana.usd,change24h:d.solana.usd_24h_change}; }
+  } catch(e){ console.log('Crypto API unavailable, using mock'); }
+
+  // Mock data for metals/ETFs (would use paid API in production)
+  const mocks={
+    'XAU':{price:3320.50,change24h:0.82},
+    'XAG':{price:32.14,change24h:1.15},
+    'SPY':{price:587.32,change24h:-0.34},
+    'QQQ':{price:492.18,change24h:-0.51},
+    'GLD':{price:315.80,change24h:0.79},
+  };
+  Object.assign(priceData,mocks);
+
+  // Generate sparkline data
+  ASSETS.forEach(a=>{
+    const base=priceData[a.id]?.price||100;
+    const trend=(priceData[a.id]?.change24h||0)>0?1:-1;
+    sparkData[a.id]=Array.from({length:20},(_,i)=>{
+      const noise=(Math.random()-.5)*base*.02;
+      const drift=trend*(i/20)*base*.01;
+      return base+noise+drift;
+    });
+  });
+
+  renderSignalGrid();
+  renderWatchlist();
+}
+
+function formatPrice(p,id){
+  if(!p) return '—';
+  if(id==='XAU'||id==='XAG') return '$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(p>1000) return '$'+p.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  return '$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function getSignal(change){
+  if(change===undefined) return {label:'cargando',cls:'sig-loading'};
+  if(change>2) return {label:'alcista ↑',cls:'sig-bull'};
+  if(change>0.5) return {label:'tendencia +',cls:'sig-bull'};
+  if(change<-2) return {label:'bajista ↓',cls:'sig-bear'};
+  if(change<-0.5) return {label:'tendencia −',cls:'sig-bear'};
+  return {label:'lateral ◆',cls:'sig-neutral'};
+}
+
+function drawSparkline(canvas,data,color,isUp){
+  if(!canvas||!data?.length) return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width=canvas.offsetWidth||140, H=canvas.height=40;
+  const min=Math.min(...data), max=Math.max(...data), range=max-min||1;
+  ctx.clearRect(0,0,W,H);
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    const x=(i/(data.length-1))*W;
+    const y=H-((v-min)/range)*(H-4)-2;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle=isUp?'#00ff88':'#ff4455';
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+  // Fill
+  ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,(isUp?'#00ff88':'#ff4455')+'44');
+  grad.addColorStop(1,'transparent');
+  ctx.fillStyle=grad;ctx.fill();
+}
+
+function renderSignalGrid(){
+  const grid=document.getElementById('signalGrid');
+  if(!grid) return;
+  grid.innerHTML=ASSETS.map(a=>{
+    const d=priceData[a.id];
+    const chg=d?.change24h;
+    const sig=getSignal(chg);
+    const isUp=(chg||0)>=0;
+    const catCls=a.cat==='crypto'?'cat-crypto':a.cat==='metal'?'cat-metal':'cat-etf';
+    return `<div class="asset-card" onclick="selectAsset('${a.id}')">
+      <div class="asset-card-header">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <div class="asset-symbol" style="color:${a.color}">${a.id}</div>
+        </div>
+        <div class="asset-category ${catCls}">${a.cat}</div>
+      </div>
+      <div class="asset-price">${formatPrice(d?.price,a.id)}</div>
+      <div class="asset-change ${isUp?'up':'down'}">${chg!==undefined?(isUp?'+':'')+chg.toFixed(2)+'%':'—'}</div>
+      <div class="asset-name">${a.name}</div>
+      <canvas class="asset-sparkline" id="spark-${a.id}" style="display:block"></canvas>
+      <div class="asset-signal">
+        <span class="signal-pill ${sig.cls}">${sig.label}</span>
+        <span class="signal-text">${getSignalText(a.id,chg)}</span>
+      </div>
+    </div>`;
+  }).join('');
+  // Draw sparklines after render
+  requestAnimationFrame(()=>{
+    ASSETS.forEach(a=>{
+      const canvas=document.getElementById('spark-'+a.id);
+      if(canvas&&sparkData[a.id]) drawSparkline(canvas,sparkData[a.id],a.color,(priceData[a.id]?.change24h||0)>=0);
+    });
+  });
+}
+
+function getSignalText(id,chg){
+  if(chg===undefined) return 'obteniendo datos...';
+  const texts={
+    BTC:chg>2?'momentum fuerte · posible continuación':chg<-2?'presión vendedora · nivel de soporte en observación':'consolidación entre rangos clave',
+    ETH:chg>1?'correlación positiva con BTC · Layer 2 activas':chg<-1?'corrección técnica normal':'acumulación lateral',
+    SOL:chg>2?'ecosistema en expansión · NFT volume up':'volatilidad alta · risk management clave',
+    XAU:chg>0.5?'refugio de valor activo · dólar débil':'toma de ganancias · soporte técnico sólido',
+    XAG:'correlación con oro · mayor volatilidad relativa',
+    SPY:chg>0?'mercado en modo riesgo · macro favorable':'corrección saludable · largo plazo intacto',
+    QQQ:chg>0?'tech liderando · IA sectorial fuerte':'rotación sectorial posible',
+    GLD:'proxy del oro · menor spread que físico',
+  };
+  return texts[id]||'análisis en proceso';
+}
+
+function renderWatchlist(){
+  const rows=document.getElementById('watchlistRows');
+  if(!rows) return;
+  rows.innerHTML=ASSETS.map(a=>{
+    const d=priceData[a.id];
+    const chg=d?.change24h;
+    const sig=getSignal(chg);
+    const isUp=(chg||0)>=0;
+    return `<div class="watchlist-row">
+      <div class="wl-name" style="color:${a.color}">${a.id} <span style="color:var(--text-muted);font-size:.62rem">${a.name}</span></div>
+      <div class="wl-price">${formatPrice(d?.price,a.id)}</div>
+      <div class="wl-change" style="color:${isUp?'#00ff88':'#ff4455'}">${chg!==undefined?(isUp?'+':'')+chg.toFixed(2)+'%':'—'}</div>
+      <div class="wl-signal"><span class="signal-pill ${sig.cls}" style="font-size:.55rem">${sig.label}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function selectAsset(id){
+  document.querySelectorAll('.asset-card').forEach(c=>c.style.outline='none');
+  const card=document.querySelector(`.asset-card[onclick*="${id}"]`);
+  if(card){const a=ASSETS.find(x=>x.id===id);card.style.outline=`1px solid ${a?.color||'#c9a96e'}44`;}
+}
+
+async function runMarketAnalysis(){
+  const btn=document.getElementById('analyzeBtn');
+  const textEl=document.getElementById('analysisText');
+  if(!textEl) return;
+  btn.disabled=true;btn.textContent='Analizando...';
+  textEl.innerHTML='<span style="color:var(--text-muted);font-style:italic;animation:fadeLoop 1.5s infinite">Aurora está leyendo el mercado...</span>';
+
+  const priceContext=ASSETS.map(a=>{
+    const d=priceData[a.id];
+    return d?`${a.id} (${a.name}): $${d.price?.toFixed(2)} ${d.change24h>=0?'+':''}${d.change24h?.toFixed(2)}%`:`${a.id}: datos no disponibles`;
+  }).join('\n');
+
+  const prompt=`Eres Aurora, el oráculo financiero de Sacred. Analiza las siguientes condiciones de mercado y genera un análisis educativo breve (4-5 oraciones) que:
+1. Identifique la tendencia dominante actual
+2. Señale el activo con mejor señal técnica
+3. Identifique un riesgo clave a observar
+4. Ofrezca una perspectiva desde la filosofía hermética de Sacred (ej: "como arriba así abajo", ciclos, etc.)
+
+Datos actuales:
+${priceContext}
+
+Importante: Este es análisis educativo, no asesoría financiera. Menciona brevemente esto al final. Voz: precisa, filosófica, directa. Sin bullet points. En español.`;
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const text=data.content.map(b=>b.text||'').join('');
+    textEl.innerHTML=text.replace(/\n/g,'<br>');
+  } catch(e){
+    textEl.innerHTML='El análisis no pudo completarse. Verifica tu conexión e intenta de nuevo.';
+  }
+  btn.disabled=false;btn.textContent='Analizar de nuevo';
+}
+
+function refreshSignal(){
+  document.getElementById('signalGrid').innerHTML=ASSETS.map(a=>`<div class="asset-card"><div class="asset-symbol" style="color:${a.color};opacity:.4">${a.id}</div><div class="asset-price" style="color:var(--text-muted)">actualizando...</div></div>`).join('');
+  fetchPrices();
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+// INIT
+renderProducts();
+renderCodexList();
+</script>
+</body>
+</html>
